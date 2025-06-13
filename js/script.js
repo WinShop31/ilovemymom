@@ -19,7 +19,6 @@ function startSequence() {
             
             // Через 2 секунды начать починку
             setTimeout(() => {
-               率先
                 document.getElementById('error').classList.add('hidden');
                 document.getElementById('repair').classList.remove('hidden');
                 
