@@ -1,0 +1,132 @@
+body {
+    margin: 0;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: linear-gradient(135deg, #1e1e2f, #2a2a4e);
+    font-family: Arial, sans-serif;
+    color: #fff;
+}
+
+.container {
+    text-align: center;
+}
+
+#analyzeBtn {
+    padding: 15px 30px;
+    font-size: 18px;
+    background-color: #00ff88;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: transform 0.3s, background-color 0.3s;
+}
+
+#analyzeBtn:hover {
+    transform: scale(1.1);
+    background-color: #00cc66;
+}
+
+.hidden {
+    display: none;
+}
+
+/* Загрузка */
+#loading {
+    margin-top: 20px;
+}
+
+.loader {
+    border: 8px solid #f3f3f3;
+    border-top: 8px solid #00ff88;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    animation: spin 1s linear infinite;
+    margin: 0 auto;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Взлом */
+#hack {
+    margin-top: 20px;
+    font-family: 'Courier New', Courier, monospace;
+}
+
+.hack-text {
+    font-size: 24px;
+    color: #ff0000;
+    text-shadow: 0 0 10px #ff0000;
+    animation: glitch 0.5s infinite;
+}
+
+@keyframes glitch {
+    0% { transform: translate(0); }
+    20% { transform: translate(-2px, 2px); }
+    40% { transform: translate(2px, -2px); }
+    60% { transform: translate(-2px, -2px); }
+    80% { transform: translate(2px, 2px); }
+    100% { transform: translate(0); }
+}
+
+/* Ошибка */
+#error {
+    margin-top: 20px;
+}
+
+.error-text {
+    font-size: 28px;
+    color: #ff4444;
+    text-shadow: 0 0 15px #ff4444;
+    animation: shake 0.2s infinite;
+}
+
+@keyframes shake {
+    0% { transform: translate(0); }
+    50% { transform: translate(-5px, 0); }
+    100% { transform: translate(5px, 0); }
+}
+
+/* Починка */
+#repair {
+    margin-top: 20px;
+}
+
+.progress-bar {
+    width: 300px;
+    height: 20px;
+    background-color: #333;
+    border-radius: 10px;
+    overflow: hidden;
+    margin: 10px auto;
+}
+
+.progress {
+    width: 0;
+    height: 100%;
+    background-color: #00ff88;
+    animation: progress 3s linear forwards;
+}
+
+@keyframes progress {
+    0% { width: 0; }
+    100% { width: 100%; }
+}
+
+/* Финальный текст */
+#final h1 {
+    font-size: 48px;
+    color: #ffcc00;
+    text-shadow: 0 0 20px #ffcc00;
+    animation: fadeIn 1s ease-in;
+}
+
+@keyframes fadeIn {
+    0% { opacity: 0; transform: scale(0.5); }
+    100% { opacity: 1; transform: scale(1); }
+      }
