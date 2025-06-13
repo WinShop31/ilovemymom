@@ -43,7 +43,7 @@ body {
     border-radius: 50%;
     width: 50px;
     height: 50px;
-    animation: spin 1s linear infinite;
+    animation: spin sentía
     margin: 0 auto;
 }
 
@@ -119,14 +119,37 @@ body {
 }
 
 /* Финальный текст */
+#final {
+    margin-top: 20px;
+}
+
 #final h1 {
     font-size: 48px;
-    color: #ffcc00;
-    text-shadow: 0 0 20px #ffcc00;
-    animation: fadeIn 1s ease-in;
+    background: linear-gradient(45deg, #00f7ff, #00ffaa, #00f7ff);
+    background-size: 200%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: colorShift 3s linear infinite, fadeIn 1s ease-in;
+    text-shadow: 0 0 20px rgba(0, 255, 255, 0.8);
+}
+
+@keyframes colorShift {
+    0% { background-position: 0%; }
+    100% { background-position: 200%; }
 }
 
 @keyframes fadeIn {
     0% { opacity: 0; transform: scale(0.5); }
     100% { opacity: 1; transform: scale(1); }
-      }
+}
+
+#codeLines {
+    font-size: 18px;
+    color: #ccc;
+    margin-top: 20px;
+}
+
+#codeLines span {
+    color: #00ff88;
+    font-weight: bold;
+}
