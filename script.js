@@ -1,6 +1,13 @@
 window.TelegramLoginWidget = {
   dataOnauth: (user) => {
-    console.log('Получены данные от Telegram:', user); // Отладка
+    // Отладка на странице
+    document.getElementById('debug').textContent = 'Получены данные: ' + JSON.stringify(user);
+    if (!user || !user.id || !user.hash) {
+      document.getElementById('status').textContent = 'Ошибка: недействительные данные';
+      document.getElementById('debug').textContent += ' (Данные некорректны)';
+      return;
+    }
+
     fetch('https://v0-testapi.vercel.app/api/telegram', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -11,16 +18,12 @@ window.TelegramLoginWidget = {
       return response.json();
     })
     .then(data => {
-      console.log('Ответ от API:', data); // Отладка
-      if (data.message) {
-        document.getElementById('status').textContent = data.message;
-      } else {
-        document.getElementById('status').textContent = 'Ошибка: нет данных';
-      }
+      document.getElementById('status').textContent = data.message || 'Успешно, но без сообщения';
+      document.getElementById('debug').textContent += ' | Ответ: ' + JSON.stringify(data);
     })
     .catch(error => {
-      console.error('Ошибка авторизации:', error);
       document.getElementById('status').textContent = `Ошибка: ${error.message}`;
+      document.getElementById('debug').textContent += ' | Ошибка: ' + error.message;
     });
   }
 };
