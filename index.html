@@ -11,8 +11,22 @@
     <h1>Авторизация через Telegram</h1>
     <div id="telegram-login"></div>
     <p id="status">Статус: Ожидание авторизации...</p>
-    <p id="debug">Отладка: Ожидание данных...</p> <!-- Добавлено для отладки -->
+    <p id="debug">Отладка: Проверка загрузки...</p>
+    <p id="loading">Загрузка виджета: Ожидание...</p> <!-- Новый индикатор -->
   </div>
+
+  <script>
+    // Проверка загрузки скрипта
+    function checkWidgetLoad() {
+      const script = document.createElement('script');
+      script.src = 'https://telegram.org/js/telegram-widget.js?22';
+      script.async = true;
+      script.onload = () => document.getElementById('loading').textContent = 'Загрузка виджета: Успешно';
+      script.onerror = () => document.getElementById('loading').textContent = 'Загрузка виджета: Ошибка';
+      document.body.appendChild(script);
+    }
+    checkWidgetLoad();
+  </script>
 
   <script async src="https://telegram.org/js/telegram-widget.js?22"
           data-telegram-login="api_by_fteam_bot"
