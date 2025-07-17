@@ -4,34 +4,29 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
-  background: linear-gradient(45deg, #ff00cc, #333399, #00ffcc, #ff3399);
-  background-size: 400% 400%;
-  animation: gradientAnimation 15s ease infinite;
+  background: linear-gradient(135deg, #1a1a1a, #4B0082);
+  font-family: Arial, sans-serif;
 }
 
 .container {
   text-align: center;
-}
-
-.neon-text {
-  font-family: 'Arial', sans-serif;
-  font-size: 4rem;
-  color: #00ffcc;
-  text-shadow: 0 0 10px #00ffcc, 0 0 20px #00ffcc, 0 0 30px #ff00cc, 0 0 40px #333399;
   padding: 20px;
-  border: 2px solid #00ffcc;
-  border-radius: 15px;
-  background: rgba(0, 0, 0, 0.2);
-  animation: neonGlow 1.5s ease-in-out infinite alternate;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
 }
 
-@keyframes gradientAnimation {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
+h1 {
+  color: #00FFFF;
+  margin-bottom: 20px;
 }
 
-@keyframes neonGlow {
-  from { text-shadow: 0 0 5px #00ffcc, 0 0 10px #00ffcc, 0 0 15px #ff00cc, 0 0 20px #333399; }
-  to { text-shadow: 0 0 10px #00ffcc, 0 0 20px #00ffcc, 0 0 30px #ff00cc, 0 0 40px #333399; }
+#status {
+  color: #00FFFF;
+  font-size: 1.2em;
+  margin-top: 20px;
+}
+
+#telegram-login {
+  margin: 20px auto;
 }
