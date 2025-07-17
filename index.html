@@ -11,29 +11,48 @@
     <h1>Авторизация через Telegram</h1>
     <div id="telegram-login"></div>
     <p id="status">Статус: Ожидание авторизации...</p>
-    <p id="debug">Отладка: Проверка загрузки...</p>
-    <p id="loading">Загрузка виджета: Ожидание...</p> <!-- Новый индикатор -->
+    <p id="debug">Отладка: Ожидание данных...</p>
+    <p id="loading">Загрузка виджета: Успешно</p>
   </div>
 
   <script>
-    // Проверка загрузки скрипта
-    function checkWidgetLoad() {
+    // Динамическая вставка скрипта с обработкой
+    function loadTelegramWidget() {
       const script = document.createElement('script');
       script.src = 'https://telegram.org/js/telegram-widget.js?22';
       script.async = true;
-      script.onload = () => document.getElementById('loading').textContent = 'Загрузка виджета: Успешно';
+      script.onload = () => {
+        document.getElementById('loading').textContent = 'Загрузка виджета: Успешно';
+        window.TelegramLoginWidget = window.TelegramLoginWidget || {};
+        window.TelegramLoginWidget.dataOnauth = (user) => {
+          document.getElementById('debug').textContent = 'Получены данные: ' + JSON.stringify(user);
+          if (!user || !user.id || !user.hash) {
+            document.getElementById('status').textContent = 'Ошибка: недействительные данные';
+            return;
+          }
+          fetch('https://v0-testapi.vercel.app/api/telegram', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(user)
+          })
+          .then(response => {
+            if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+            return response.json();
+          })
+          .then(data => {
+            document.getElementById('status').textContent = data.message || 'Успешно';
+            document.getElementById('debug').textContent += ' | Ответ: ' + JSON.stringify(data);
+          })
+          .catch(error => {
+            document.getElementById('status').textContent = `Ошибка: ${error.message}`;
+            document.getElementById('debug').textContent += ' | Ошибка: ' + error.message;
+          });
+        };
+      };
       script.onerror = () => document.getElementById('loading').textContent = 'Загрузка виджета: Ошибка';
       document.body.appendChild(script);
     }
-    checkWidgetLoad();
+    loadTelegramWidget();
   </script>
-
-  <script async src="https://telegram.org/js/telegram-widget.js?22"
-          data-telegram-login="api_by_fteam_bot"
-          data-size="large"
-          data-auth-url="https://v0-testapi.vercel.app/api/telegram"
-          data-request-access="write">
-  </script>
-  <script src="script.js"></script>
 </body>
 </html>
