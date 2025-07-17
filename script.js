@@ -1,6 +1,5 @@
 window.TelegramLoginWidget = {
   dataOnauth: (user) => {
-    // Отладка на странице
     document.getElementById('debug').textContent = 'Получены данные: ' + JSON.stringify(user);
     if (!user || !user.id || !user.hash) {
       document.getElementById('status').textContent = 'Ошибка: недействительные данные';
