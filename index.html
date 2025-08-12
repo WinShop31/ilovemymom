@@ -1,60 +1,11 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Telegram Login Test</title>
-  <link rel="stylesheet" href="styles.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Redirect Button</title>
 </head>
 <body>
-  <div class="container">
-    <h1>Авторизация через Telegram</h1>
-    <div id="telegram-login"></div>
-    <p id="status">Статус: Ожидание авторизации...</p>
-    <p id="debug">Отладка: Ожидание данных...</p>
-    <p id="loading">Загрузка виджета: Ожидание...</p>
-  </div>
-
-  <script async src="https://telegram.org/js/telegram-widget.js?22"
-          data-telegram-login="api_by_fteam_bot"
-          data-size="large"
-          data-onauth="onTelegramAuth(user)"
-          data-auth-url="https://v0-testapi.vercel.app/api/telegram"
-          data-request-access="write">
-  </script>
-
-  <script type="text/javascript">
-    function onTelegramAuth(user) {
-      document.getElementById('debug').textContent = 'Получены данные: ' + JSON.stringify(user);
-      if (!user || !user.id || !user.hash) {
-        document.getElementById('status').textContent = 'Ошибка: недействительные данные';
-        document.getElementById('debug').textContent += ' (Данные некорректны)';
-        return;
-      }
-
-      fetch('https://v0-testapi.vercel.app/api/telegram', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(user)
-      })
-      .then(response => {
-        if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
-        return response.json();
-      })
-      .then(data => {
-        document.getElementById('status').textContent = data.message || 'Успешно, но без сообщения';
-        document.getElementById('debug').textContent += ' | Ответ: ' + JSON.stringify(data);
-      })
-      .catch(error => {
-        document.getElementById('status').textContent = `Ошибка: ${error.message}`;
-        document.getElementById('debug').textContent += ' | Ошибка: ' + error.message;
-      });
-    }
-
-    // Проверка загрузки
-    window.addEventListener('load', () => {
-      document.getElementById('loading').textContent = 'Загрузка виджета: Успешно';
-    });
-  </script>
+    <button onclick="window.location.href='v2raytun://import/https://connect.wispyx.net/sub/YW5kcm9pZF9OZElLSnZsMTc1NTAxMzU0NgzVDsJp-Doj#android_NdIKJv'">Перейти</button>
 </body>
 </html>
