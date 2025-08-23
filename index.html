@@ -3,73 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Сайт на модерации</title>
-    <style>
-        body {
-            margin: 0;
-            height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            background: #000;
-            overflow: hidden;
-            font-family: 'Arial', sans-serif;
-        }
-
-        /* Неоновый фон */
-        .background {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(45deg, #ff00ff, #00f0ff, #ff00ff, #00f0ff);
-            background-size: 400%;
-            animation: colorShift 8s ease infinite;
-            filter: blur(100px);
-            opacity: 0.6;
-        }
-
-        @keyframes colorShift {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
-
-        /* Неоновый текст */
-        .text {
-            position: relative;
-            color: #fff;
-            font-size: 2.5em;
-            text-align: center;
-            text-transform: uppercase;
-            text-shadow:
-                0 0 10px #ff00ff,
-                0 0 20px #ff00ff,
-                0 0 40px #00f0ff,
-                0 0 80px #00f0ff;
-            animation: neonGlow 1.5s ease-in-out infinite alternate;
-            z-index: 1;
-        }
-
-        @keyframes neonGlow {
-            from {
-                text-shadow:
-                    0 0 10px #ff00ff,
-                    0 0 20px #ff00ff,
-                    0 0 30px #00f0ff,
-                    0 0 40px #00f0ff;
-            }
-            to {
-                text-shadow:
-                    0 0 20px #ff00ff,
-                    0 0 30px #ff00ff,
-                    0 0 50px #00f0ff,
-                    0 0 60px #00f0ff;
-            }
-        }
-    </style>
+    <title>Neon Download Site</title>
+    <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
-    <div class="background"></div>
-    <div class="text">Сайт проходит модерацию, просьба подождать</div>
+    <div class="container">
+        <h1 class="neon-text">Neon Download</h1>
+        <p class="sub-text">Скачай крутой файл прямо сейчас!</p>
+        <a href="assets/ByeByeDPI-v.1.6.4-arm64-v8a.apk" download class="neon-button">Скачать файл</a>
+    </div>
 </body>
-        </html>
+</html>
