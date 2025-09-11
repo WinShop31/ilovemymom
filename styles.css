@@ -88,6 +88,19 @@ h2 {
   box-shadow: 0 0 10px #777;
 }
 
+/* Стили для индикатора загрузки и ошибок */
+#loading {
+  color: #00ffea;
+  font-size: 1.2em;
+  margin-bottom: 20px;
+}
+
+#error {
+  color: #ff4d4d;
+  font-size: 1.2em;
+  margin-bottom: 20px;
+}
+
 /* Адаптивность */
 @media (max-width: 600px) {
   h1 {
@@ -107,4 +120,4 @@ h2 {
     padding: 8px 15px;
     font-size: 1em;
   }
-}
+  }
