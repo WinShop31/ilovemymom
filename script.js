@@ -4,32 +4,58 @@ const repoName = 'ilovemymom'; // Название репозитория
 
 // Функция для получения списка файлов
 async function fetchFiles() {
+  const loading = document.getElementById('loading');
+  const error = document.getElementById('error');
+  const fileList = document.getElementById('file-list');
+
   try {
-    const response = await fetch(`https://api.github.com/repos/${repoOwner}/${repoName}/contents/files`);
+    loading.style.display = 'block';
+    error.style.display = 'none';
+
+    const response = await fetch(`https://api.github.com/repos/${repoOwner}/${repoName}/contents/files`, {
+      headers: {
+        'Accept': 'application/vnd.github.v3+json'
+        // Если нужен токен, раскомментируй и добавь свой токен
+        // 'Authorization': 'token ВАШ_ТОКЕН'
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP ошибка: ${response.status} ${response.statusText}`);
+    }
+
     const files = await response.json();
-    
+    console.log('Ответ API:', files); // Для отладки
+
     if (!Array.isArray(files)) {
-      console.error('Ошибка: файлы не найдены или неверный ответ API');
+      throw new Error('Неверный формат ответа API или папка files пуста');
+    }
+
+    loading.style.display = 'none';
+
+    if (files.length === 0) {
+      error.style.display = 'block';
+      error.textContent = 'Папка files пуста';
       return;
     }
 
-    const fileList = document.getElementById('file-list');
-    
     files.forEach(file => {
-      // Предполагаем, что для каждого файла (например, example.zip) есть example.jpg и articles/fileN.html
+      // Предполагаем, что для файла (например, example.zip) есть example.jpg и articles/file1.html
       const fileName = file.name.split('.')[0]; // Убираем расширение
       const fileItem = document.createElement('div');
       fileItem.className = 'file-item';
       fileItem.innerHTML = `
-        <img src="images/${fileName}.jpg" alt="${fileName}" class="file-image">
+        <img src="images/${fileName}.jpg" alt="${fileName}" class="file-image" onerror="this.src='images/placeholder.jpg'">
         <h2>${fileName}</h2>
-        <a href="articles/file1.html" class="btn">Подробнее</a>
+        <a href="articles/${fileName}.html" class="btn">Подробнее</a>
       `;
       fileList.appendChild(fileItem);
     });
-  } catch (error) {
-    console.error('Ошибка при загрузке файлов:', error);
-    document.getElementById('file-list').innerHTML = '<p>Ошибка загрузки файлов</p>';
+  } catch (err) {
+    console.error('Ошибка при загрузке файлов:', err);
+    loading.style.display = 'none';
+    error.style.display = 'block';
+    error.textContent = `Ошибка: ${err.message}`;
   }
 }
 
