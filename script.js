@@ -1,4 +1,4 @@
-// Замени на свои данные
+// Указываем правильные данные
 const repoOwner = 'WinShop31'; // Твой логин на GitHub
 const repoName = 'ilovemymom'; // Название репозитория
 
@@ -14,9 +14,9 @@ async function fetchFiles() {
 
     const response = await fetch(`https://api.github.com/repos/${repoOwner}/${repoName}/contents/files`, {
       headers: {
-        'Accept': 'application/vnd.github.v3+json'
-        // Если нужен токен, раскомментируй и добавь свой токен
-        // 'Authorization': 'token ВАШ_ТОКЕН'
+        'Accept': 'application/vnd.github.v3+json',
+        // Раскомментированная строка для токена, замените ВАШ_ТОКЕН на реальный токен
+        'Authorization': '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'
       }
     });
 
@@ -40,7 +40,7 @@ async function fetchFiles() {
     }
 
     files.forEach(file => {
-      // Предполагаем, что для файла (например, example.zip) есть example.jpg и articles/file1.html
+      // Предполагаем, что для файла (например, example.zip) есть example.jpg и articles/example.html
       const fileName = file.name.split('.')[0]; // Убираем расширение
       const fileItem = document.createElement('div');
       fileItem.className = 'file-item';
@@ -55,7 +55,7 @@ async function fetchFiles() {
     console.error('Ошибка при загрузке файлов:', err);
     loading.style.display = 'none';
     error.style.display = 'block';
-    error.textContent = `Ошибка: ${err.message}`;
+    error.textContent = `Ошибка: ${err.message}. Проверь консоль для деталей.`;
   }
 }
 
