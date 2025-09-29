@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Redirector</title>
+    <style>
+        body {
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(45deg, #8e2de2, #ffffff, #4a00e0);
+            background-size: 300%;
+            animation: bgShift 8s ease infinite;
+            font-family: Arial, sans-serif;
+        }
+
+        @keyframes bgShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .neon-text {
+            font-size: 2.5em;
+            font-weight: bold;
+            text-align: center;
+            color: #fff;
+            text-shadow:
+                0 0 5px #fff,
+                0 0 10px #fff,
+                0 0 20px #ff00ff,
+                0 0 40px #ff00ff,
+                0 0 80px #ff00ff;
+            animation: neonGlow 1.5s ease-in-out infinite alternate;
+        }
+
+        .cookie-text {
+            font-size: 2em;
+            font-weight: bold;
+            text-align: center;
+            color: #fff;
+            text-shadow:
+                0 0 5px #fff,
+                0 0 10px #00ff00,
+                0 0 20px #00ff00,
+                0 0 40px #ff0000,
+                0 0 80px #ff0000;
+            animation: neonGlow 1s ease-in-out infinite alternate;
+        }
+
+        @keyframes neonGlow {
+            from {
+                text-shadow:
+                    0 0 5px #fff,
+                    0 0 10px #fff,
+                    0 0 20px #ff00ff,
+                    0 0 40px #ff00ff,
+                    0 0 80px #ff00ff;
+            }
+            to {
+                text-shadow:
+                    0 0 10px #fff,
+                    0 0 20px #fff,
+                    0 0 30px #ff00ff,
+                    0 0 60px #ff00ff,
+                    0 0 100px #ff00ff;
+            }
+        }
+
+        .cookie-protected {
+            font-size: 2em;
+            font-weight: bold;
+            text-align: center;
+            color: #fff;
+            text-shadow:
+                0 0 5px #fff,
+                0 0 10px #00ff00,
+                0 0 20px #00ff00,
+                0 0 40px #ff0000,
+                0 0 80px #ff0000;
+            animation: neonGlow 1s ease-in-out infinite alternate;
+        }
+    </style>
+</head>
+<body>
+    <div id="message" class="neon-text">Проверяю ваше устройство...</div>
+
+    <script>
+        function getRandomTime(min, max) {
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+        }
+
+        const messageElement = document.getElementById('message');
+        const checkDeviceTime = getRandomTime(4, 9) * 1000; // 4-9 секунд
+        const protectCookiesTime = getRandomTime(3, 5) * 1000; // 3-5 секунд
+        const finalMessageTime = getRandomTime(1, 2) * 1000; // 1-2 секунды
+
+        // Проверка устройства
+        setTimeout(() => {
+            messageElement.textContent = 'Защищаю ваши куки 🍪';
+            messageElement.className = 'cookie-text';
+            
+            // Защита куки
+            setTimeout(() => {
+                messageElement.textContent = 'Ваш куки защищен! Выполняю переадресацию...';
+                messageElement.className = 'cookie-protected';
+                
+                // Переадресация
+                setTimeout(() => {
+                    window.location.href = 'https://funpay.com';
+                }, finalMessageTime);
+            }, protectCookiesTime);
+        }, checkDeviceTime);
+    </script>
+</body>
+  </html>
