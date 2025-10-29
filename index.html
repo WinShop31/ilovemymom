@@ -21,7 +21,6 @@
             -webkit-text-size-adjust: none;
         }
 
-        /* Градиентный фон */
         .bg {
             position: fixed;
             inset: 0;
@@ -37,7 +36,6 @@
             100% { background-position: 0% 50%; }
         }
 
-        /* Неоновое свечение */
         .neon-text {
             text-shadow: 
                 0 0 5px #fff,
@@ -55,7 +53,6 @@
             to   { text-shadow: 0 0 10px #fff, 0 0 20px #fff, 0 0 30px #8B00FF, 0 0 40px #8B00FF, 0 0 50px #00BFFF, 0 0 70px #00BFFF, 0 0 90px #00BFFF; }
         }
 
-        /* Плавающие надписи */
         .floating-neon {
             position: absolute;
             font-weight: 900;
@@ -80,7 +77,6 @@
             100% { transform: translateX(180%) rotate(-12deg); }
         }
 
-        /* Контейнер */
         .container {
             position: relative;
             z-index: 1;
@@ -91,7 +87,6 @@
             padding: 1rem;
         }
 
-        /* Рамка — как на фото */
         .frame {
             background: rgba(10, 10, 30, 0.45);
             backdrop-filter: blur(12px);
@@ -114,7 +109,6 @@
             to   { box-shadow: 0 0 35px rgba(139, 0, 255, 0.5), 0 0 65px rgba(0, 191, 255, 0.4), inset 0 0 40px rgba(139, 0, 255, 0.2); }
         }
 
-        /* Заголовок — как на фото */
         .title {
             font-size: clamp(1.3rem, 5.2vw, 1.9rem);
             font-weight: 700;
@@ -132,7 +126,6 @@
             50% { background-position: 100% 50%; }
         }
 
-        /* Список — как на фото */
         .list {
             text-align: left;
             font-size: clamp(0.92rem, 3.6vw, 1.05rem);
@@ -147,14 +140,12 @@
             text-shadow: 0 0 10px currentColor;
         }
 
-        /* Цвета как на фото */
-        .list strong:nth-of-type(1) { color: #8B00FF; } /* F DLC */
-        .list strong:nth-of-type(2) { color: #8B00FF; } /* Nemo */
-        .list strong:nth-of-type(3) { color: #FF00FF; } /* Fex */
-        .list strong:nth-of-type(4) { color: #00FFFF; } /* VFex */
-        .list strong:nth-of-type(5) { color: #FF6B9D; } /* DBot */
+        .list strong:nth-of-type(1) { color: #8B00FF; }
+        .list strong:nth-of-type(2) { color: #8B00FF; }
+        .list strong:nth-of-type(3) { color: #FF00FF; }
+        .list strong:nth-of-type(4) { color: #00FFFF; }
+        .list strong:nth-of-type(5) { color: #FF6B9D; }
 
-        /* Предупреждение — розовое, как на фото */
         .warning {
             font-style: italic;
             color: #FF6B9D;
@@ -165,7 +156,6 @@
             word-break: break-word;
         }
 
-        /* Домен — фиолетовый, как на фото */
         .domain {
             font-family: 'Courier New', monospace;
             color: #8B00FF;
@@ -175,14 +165,12 @@
             font-size: clamp(0.95rem, 3.8vw, 1.05rem);
         }
 
-        /* Дополнение списка */
         .list + .list {
             margin-top: 0.3rem;
             font-size: clamp(0.9rem, 3.5vw, 1rem);
             color: #ddd;
         }
 
-        /* Спонсор — циановый, как на фото */
         .sponsor {
             margin-top: 1.5rem;
             font-size: clamp(0.9rem, 3.7vw, 1.05rem);
@@ -192,7 +180,6 @@
             font-weight: 700;
         }
 
-        /* Футер */
         .footer {
             position: absolute;
             bottom: 0.8rem;
@@ -204,7 +191,6 @@
             text-shadow: 0 0 5px rgba(139, 0, 255, 0.3);
         }
 
-        /* Отключение выделения */
         * {
             -webkit-user-select: none;
             -moz-user-select: none;
@@ -216,7 +202,6 @@
 <body>
     <div class="bg"></div>
 
-    <!-- Плавающие надписи -->
     <div class="floating-neon neon-text">FILLS OFFICIAL</div>
     <div class="floating-neon neon-text">DLC PROJECTS</div>
     <div class="floating-neon neon-text">NEON FUTURE</div>
@@ -249,7 +234,6 @@
         2025г. Все права защищены ©
     </div>
 
-    <!-- Блокировка зума -->
     <script>
         document.addEventListener('wheel', e => e.ctrlKey && e.preventDefault(), { passive: false });
         ['gesturestart', 'gesturechange', 'gestureend'].forEach(evt => 
@@ -257,4 +241,4 @@
         );
     </script>
 </body>
-    </html>
+</html>
