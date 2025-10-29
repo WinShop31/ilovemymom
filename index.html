@@ -5,8 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Fills Official</title>
     <style>
-        /* Сброс стилей */
-        * {
+        *, *::before, *::after {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
@@ -14,14 +13,15 @@
 
         body, html {
             height: 100%;
-            font-family: 'Orbitron', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Orbitron', 'Arial', sans-serif;
             overflow: hidden;
             background: #000;
             color: #fff;
-            touch-action: pan-x pan-y; /* Отключает зум на тач-устройствах */
+            touch-action: pan-x pan-y;
+            -webkit-text-size-adjust: none;
         }
 
-        /* Анимированный градиентный фон */
+        /* Градиентный фон */
         .bg {
             position: fixed;
             inset: 0;
@@ -37,7 +37,7 @@
             100% { background-position: 0% 50%; }
         }
 
-        /* Неоновый свечение для текста */
+        /* Неоновое свечение */
         .neon-text {
             text-shadow: 
                 0 0 5px #fff,
@@ -51,29 +51,15 @@
         }
 
         @keyframes pulse {
-            from { text-shadow: 
-                0 0 5px #fff,
-                0 0 10px #fff,
-                0 0 20px #8B00FF,
-                0 0 30px #8B00FF,
-                0 0 40px #00BFFF,
-                0 0 50px #00BFFF,
-                0 0 70px #00BFFF; }
-            to { text-shadow: 
-                0 0 10px #fff,
-                0 0 20px #fff,
-                0 0 30px #8B00FF,
-                0 0 40px #8B00FF,
-                0 0 50px #00BFFF,
-                0 0 70px #00BFFF,
-                0 0 90px #00BFFF; }
+            from { text-shadow: 0 0 5px #fff, 0 0 10px #fff, 0 0 20px #8B00FF, 0 0 30px #8B00FF, 0 0 40px #00BFFF, 0 0 50px #00BFFF, 0 0 70px #00BFFF; }
+            to   { text-shadow: 0 0 10px #fff, 0 0 20px #fff, 0 0 30px #8B00FF, 0 0 40px #8B00FF, 0 0 50px #00BFFF, 0 0 70px #00BFFF, 0 0 90px #00BFFF; }
         }
 
-        /* Плавающие неоновые надписи на фоне */
+        /* Плавающие надписи */
         .floating-neon {
             position: absolute;
             font-weight: 900;
-            font-size: 4rem;
+            font-size: clamp(2.5rem, 7vw, 4rem);
             opacity: 0.07;
             pointer-events: none;
             animation: float 20s infinite linear;
@@ -81,19 +67,20 @@
             text-transform: uppercase;
             letter-spacing: 0.2em;
             transform: rotate(-12deg);
+            z-index: -1;
         }
 
-        .floating-neon:nth-child(1) { top: 15%; left: -20%; animation-duration: 18s; }
-        .floating-neon:nth-child(2) { top: 45%; right: -25%; animation-duration: 22s; animation-delay: -5s; }
-        .floating-neon:nth-child(3) { bottom: 20%; left: -15%; animation-duration: 25s; animation-delay: -10s; }
-        .floating-neon:nth-child(4) { top: 70%; right: -30%; animation-duration: 20s; animation-delay: -8s; }
+        .floating-neon:nth-child(1) { top: 10%; left: -30%; animation-duration: 18s; }
+        .floating-neon:nth-child(2) { top: 40%; right: -35%; animation-duration: 22s; animation-delay: -5s; }
+        .floating-neon:nth-child(3) { bottom: 15%; left: -25%; animation-duration: 25s; animation-delay: -10s; }
+        .floating-neon:nth-child(4) { top: 65%; right: -40%; animation-duration: 20s; animation-delay: -8s; }
 
         @keyframes float {
             0% { transform: translateX(-100%) rotate(-12deg); }
-            100% { transform: translateX(150%) rotate(-12deg); }
+            100% { transform: translateX(180%) rotate(-12deg); }
         }
 
-        /* Центральная полупрозрачная рамка */
+        /* Контейнер */
         .container {
             position: relative;
             z-index: 1;
@@ -101,18 +88,19 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 2rem;
+            padding: 1rem;
         }
 
+        /* Рамка — как на фото */
         .frame {
             background: rgba(10, 10, 30, 0.45);
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
             border: 1px solid rgba(139, 0, 255, 0.4);
             border-radius: 20px;
-            padding: 3rem 2.5rem;
+            padding: clamp(1.5rem, 4.5vw, 2.5rem) clamp(1.2rem, 3.5vw, 2rem);
+            width: 92%;
             max-width: 800px;
-            width: 100%;
             box-shadow: 
                 0 0 20px rgba(139, 0, 255, 0.3),
                 0 0 40px rgba(0, 191, 255, 0.2),
@@ -122,20 +110,15 @@
         }
 
         @keyframes frameGlow {
-            from { box-shadow: 
-                0 0 20px rgba(139, 0, 255, 0.3),
-                0 0 40px rgba(0, 191, 255, 0.2),
-                inset 0 0 30px rgba(139, 0, 255, 0.1); }
-            to { box-shadow: 
-                0 0 30px rgba(139, 0, 255, 0.5),
-                0 0 60px rgba(0, 191, 255, 0.4),
-                inset 0 0 40px rgba(139, 0, 255, 0.2); }
+            from { box-shadow: 0 0 20px rgba(139, 0, 255, 0.3), 0 0 40px rgba(0, 191, 255, 0.2), inset 0 0 30px rgba(139, 0, 255, 0.1); }
+            to   { box-shadow: 0 0 35px rgba(139, 0, 255, 0.5), 0 0 65px rgba(0, 191, 255, 0.4), inset 0 0 40px rgba(139, 0, 255, 0.2); }
         }
 
+        /* Заголовок — как на фото */
         .title {
-            font-size: 1.8rem;
+            font-size: clamp(1.3rem, 5.2vw, 1.9rem);
             font-weight: 700;
-            margin-bottom: 1.5rem;
+            margin-bottom: 1rem;
             letter-spacing: 0.05em;
             background: linear-gradient(90deg, #8B00FF, #00BFFF, #8B00FF);
             -webkit-background-clip: text;
@@ -149,61 +132,83 @@
             50% { background-position: 100% 50%; }
         }
 
+        /* Список — как на фото */
         .list {
             text-align: left;
-            font-size: 1.1rem;
-            line-height: 2.2;
-            margin: 1.5rem 0;
-            color: #e0e0ff;
+            font-size: clamp(0.92rem, 3.6vw, 1.05rem);
+            line-height: 2.1;
+            margin: 1rem 0;
+            color: #fff;
+            word-break: break-word;
         }
 
         .list strong {
-            color: #8B00FF;
-            text-shadow: 0 0 8px #8B00FF;
+            font-weight: 800;
+            text-shadow: 0 0 10px currentColor;
         }
 
+        /* Цвета как на фото */
+        .list strong:nth-of-type(1) { color: #8B00FF; } /* F DLC */
+        .list strong:nth-of-type(2) { color: #8B00FF; } /* Nemo */
+        .list strong:nth-of-type(3) { color: #FF00FF; } /* Fex */
+        .list strong:nth-of-type(4) { color: #00FFFF; } /* VFex */
+        .list strong:nth-of-type(5) { color: #FF6B9D; } /* DBot */
+
+        /* Предупреждение — розовое, как на фото */
         .warning {
             font-style: italic;
-            color: #ff6b9d;
-            margin: 1.2rem 0;
-            font-size: 0.95rem;
-            line-height: 1.5;
-            text-shadow: 0 0 6px rgba(255, 107, 157, 0.4);
+            color: #FF6B9D;
+            margin: 1rem 0;
+            font-size: clamp(0.82rem, 3.3vw, 0.92rem);
+            line-height: 1.55;
+            text-shadow: 0 0 8px rgba(255, 107, 157, 0.6);
+            word-break: break-word;
         }
 
-        .sponsor {
-            margin-top: 2rem;
-            font-size: 1rem;
-            color: #00ffff;
-            text-shadow: 0 0 10px #00ffff;
-            letter-spacing: 0.08em;
-        }
-
+        /* Домен — фиолетовый, как на фото */
         .domain {
             font-family: 'Courier New', monospace;
             color: #8B00FF;
-            text-shadow: 0 0 8px #8B00FF;
+            text-shadow: 0 0 10px #8B00FF;
             margin: 1rem 0;
             font-weight: bold;
+            font-size: clamp(0.95rem, 3.8vw, 1.05rem);
         }
 
+        /* Дополнение списка */
+        .list + .list {
+            margin-top: 0.3rem;
+            font-size: clamp(0.9rem, 3.5vw, 1rem);
+            color: #ddd;
+        }
+
+        /* Спонсор — циановый, как на фото */
+        .sponsor {
+            margin-top: 1.5rem;
+            font-size: clamp(0.9rem, 3.7vw, 1.05rem);
+            color: #00FFFF;
+            text-shadow: 0 0 12px #00FFFF;
+            letter-spacing: 0.1em;
+            font-weight: 700;
+        }
+
+        /* Футер */
         .footer {
             position: absolute;
-            bottom: 1.5rem;
+            bottom: 0.8rem;
             left: 0;
             right: 0;
             text-align: center;
-            font-size: 0.9rem;
-            color: rgba(255, 255, 255, 0.6);
+            font-size: clamp(0.75rem, 2.8vw, 0.85rem);
+            color: rgba(255, 255, 255, 0.7);
             text-shadow: 0 0 5px rgba(139, 0, 255, 0.3);
         }
 
-        /* Адаптивность */
-        @media (max-width: 768px) {
-            .frame { padding: 2rem 1.5rem; }
-            .title { font-size: 1.5rem; }
-            .list { font-size: 1rem; line-height: 2; }
-            .floating-neon { font-size: 3rem; }
+        /* Отключение выделения */
+        * {
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            user-select: none;
         }
     </style>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
@@ -211,7 +216,7 @@
 <body>
     <div class="bg"></div>
 
-    <!-- Плавающие неоновые надписи -->
+    <!-- Плавающие надписи -->
     <div class="floating-neon neon-text">FILLS OFFICIAL</div>
     <div class="floating-neon neon-text">DLC PROJECTS</div>
     <div class="floating-neon neon-text">NEON FUTURE</div>
@@ -244,25 +249,12 @@
         2025г. Все права защищены ©
     </div>
 
-    <!-- Блокировка масштабирования через JS (на всякий случай) -->
+    <!-- Блокировка зума -->
     <script>
-        // Отключаем зум колёсиком + Ctrl
-        document.addEventListener('wheel', function(e) {
-            if (e.ctrlKey) {
-                e.preventDefault();
-            }
-        }, { passive: false });
-
-        // Отключаем жесты (пинч-зум)
-        document.addEventListener('gesturestart', function(e) {
-            e.preventDefault();
-        });
-        document.addEventListener('gesturechange', function(e) {
-            e.preventDefault();
-        });
-        document.addEventListener('gestureend', function(e) {
-            e.preventDefault();
-        });
+        document.addEventListener('wheel', e => e.ctrlKey && e.preventDefault(), { passive: false });
+        ['gesturestart', 'gesturechange', 'gestureend'].forEach(evt => 
+            document.addEventListener(evt, e => e.preventDefault(), { passive: false })
+        );
     </script>
 </body>
-</html>
+    </html>
