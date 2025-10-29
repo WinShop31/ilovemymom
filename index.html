@@ -1,119 +1,247 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Redirector</title>
+    <title>Fills Official</title>
     <style>
-        body {
+        /* Сброс стилей */
+        * {
             margin: 0;
-            height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            background: linear-gradient(45deg, #8e2de2, #ffffff, #4a00e0);
-            background-size: 300%;
-            animation: bgShift 8s ease infinite;
-            font-family: Arial, sans-serif;
+            padding: 0;
+            box-sizing: border-box;
         }
 
-        @keyframes bgShift {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
+        body, html {
+            height: 100%;
+            font-family: 'Orbitron', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+            background: #000;
+            color: #fff;
+        }
+
+        /* Анимированный градиентный фон */
+        .bg {
+            position: fixed;
+            inset: 0;
+            background: linear-gradient(135deg, #8B00FF, #00BFFF, #8B00FF);
+            background-size: 300% 300%;
+            animation: gradientFlow 12s ease infinite;
+            z-index: -2;
+        }
+
+        @keyframes gradientFlow {
+            0%   { background-position: 0% 50%; }
+            50%  { background-position: 100% 50%; }
             100% { background-position: 0% 50%; }
         }
 
+        /* Неоновый свечение для текста */
         .neon-text {
-            font-size: 2.5em;
-            font-weight: bold;
-            text-align: center;
-            color: #fff;
-            text-shadow:
+            text-shadow: 
                 0 0 5px #fff,
                 0 0 10px #fff,
-                0 0 20px #ff00ff,
-                0 0 40px #ff00ff,
-                0 0 80px #ff00ff;
-            animation: neonGlow 1.5s ease-in-out infinite alternate;
+                0 0 20px #8B00FF,
+                0 0 30px #8B00FF,
+                0 0 40px #00BFFF,
+                0 0 50px #00BFFF,
+                0 0 70px #00BFFF;
+            animation: pulse 2s infinite alternate;
         }
 
-        .cookie-text {
-            font-size: 2em;
-            font-weight: bold;
-            text-align: center;
-            color: #fff;
-            text-shadow:
+        @keyframes pulse {
+            from { text-shadow: 
                 0 0 5px #fff,
-                0 0 10px #00ff00,
-                0 0 20px #00ff00,
-                0 0 40px #ff0000,
-                0 0 80px #ff0000;
-            animation: neonGlow 1s ease-in-out infinite alternate;
+                0 0 10px #fff,
+                0 0 20px #8B00FF,
+                0 0 30px #8B00FF,
+                0 0 40px #00BFFF,
+                0 0 50px #00BFFF,
+                0 0 70px #00BFFF; }
+            to { text-shadow: 
+                0 0 10px #fff,
+                0 0 20px #fff,
+                0 0 30px #8B00FF,
+                0 0 40px #8B00FF,
+                0 0 50px #00BFFF,
+                0 0 70px #00BFFF,
+                0 0 90px #00BFFF; }
         }
 
-        @keyframes neonGlow {
-            from {
-                text-shadow:
-                    0 0 5px #fff,
-                    0 0 10px #fff,
-                    0 0 20px #ff00ff,
-                    0 0 40px #ff00ff,
-                    0 0 80px #ff00ff;
-            }
-            to {
-                text-shadow:
-                    0 0 10px #fff,
-                    0 0 20px #fff,
-                    0 0 30px #ff00ff,
-                    0 0 60px #ff00ff,
-                    0 0 100px #ff00ff;
-            }
+        /* Плавающие неоновые надписи на фоне */
+        .floating-neon {
+            position: absolute;
+            font-weight: 900;
+            font-size: 4rem;
+            opacity: 0.07;
+            pointer-events: none;
+            animation: float 20s infinite linear;
+            white-space: nowrap;
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            transform: rotate(-12deg);
         }
 
-        .cookie-protected {
-            font-size: 2em;
-            font-weight: bold;
+        .floating-neon:nth-child(1) { top: 15%; left: -20%; animation-duration: 18s; }
+        .floating-neon:nth-child(2) { top: 45%; right: -25%; animation-duration: 22s; animation-delay: -5s; }
+        .floating-neon:nth-child(3) { bottom: 20%; left: -15%; animation-duration: 25s; animation-delay: -10s; }
+        .floating-neon:nth-child(4) { top: 70%; right: -30%; animation-duration: 20s; animation-delay: -8s; }
+
+        @keyframes float {
+            0% { transform: translateX(-100%) rotate(-12deg); }
+            100% { transform: translateX(150%) rotate(-12deg); }
+        }
+
+        /* Центральная полупрозрачная рамка */
+        .container {
+            position: relative;
+            z-index: 1;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        .frame {
+            background: rgba(10, 10, 30, 0.45);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(139, 0, 255, 0.4);
+            border-radius: 20px;
+            padding: 3rem 2.5rem;
+            max-width: 800px;
+            width: 100%;
+            box-shadow: 
+                0 0 20px rgba(139, 0, 255, 0.3),
+                0 0 40px rgba(0, 191, 255, 0.2),
+                inset 0 0 30px rgba(139, 0, 255, 0.1);
             text-align: center;
-            color: #fff;
-            text-shadow:
-                0 0 5px #fff,
-                0 0 10px #00ff00,
-                0 0 20px #00ff00,
-                0 0 40px #ff0000,
-                0 0 80px #ff0000;
-            animation: neonGlow 1s ease-in-out infinite alternate;
+            animation: frameGlow 4s infinite alternate;
+        }
+
+        @keyframes frameGlow {
+            from { box-shadow: 
+                0 0 20px rgba(139, 0, 255, 0.3),
+                0 0 40px rgba(0, 191, 255, 0.2),
+                inset 0 0 30px rgba(139, 0, 255, 0.1); }
+            to { box-shadow: 
+                0 0 30px rgba(139, 0, 255, 0.5),
+                0 0 60px rgba(0, 191, 255, 0.4),
+                inset 0 0 40px rgba(139, 0, 255, 0.2); }
+        }
+
+        .title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            letter-spacing: 0.05em;
+            background: linear-gradient(90deg, #8B00FF, #00BFFF, #8B00FF);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: titleFlow 6s ease infinite;
+        }
+
+        @keyframes titleFlow {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        .list {
+            text-align: left;
+            font-size: 1.1rem;
+            line-height: 2.2;
+            margin: 1.5rem 0;
+            color: #e0e0ff;
+        }
+
+        .list strong {
+            color: #8B00FF;
+            text-shadow: 0 0 8px #8B00FF;
+        }
+
+        .warning {
+            font-style: italic;
+            color: #ff6b9d;
+            margin: 1.2rem 0;
+            font-size: 0.95rem;
+            line-height: 1.5;
+            text-shadow: 0 0 6px rgba(255, 107, 157, 0.4);
+        }
+
+        .sponsor {
+            margin-top: 2rem;
+            font-size: 1rem;
+            color: #00ffff;
+            text-shadow: 0 0 10px #00ffff;
+            letter-spacing: 0.08em;
+        }
+
+        .domain {
+            font-family: 'Courier New', monospace;
+            color: #8B00FF;
+            text-shadow: 0 0 8px #8B00FF;
+            margin: 1rem 0;
+            font-weight: bold;
+        }
+
+        .footer {
+            position: absolute;
+            bottom: 1.5rem;
+            left: 0;
+            right: 0;
+            text-align: center;
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.6);
+            text-shadow: 0 0 5px rgba(139, 0, 255, 0.3);
+        }
+
+        /* Адаптивность */
+        @media (max-width: 768px) {
+            .frame { padding: 2rem 1.5rem; }
+            .title { font-size: 1.5rem; }
+            .list { font-size: 1rem; line-height: 2; }
+            .floating-neon { font-size: 3rem; }
         }
     </style>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
 </head>
 <body>
-    <div id="message" class="neon-text">Проверяю ваше устройство...</div>
+    <div class="bg"></div>
 
-    <script>
-        function getRandomTime(min, max) {
-            return Math.floor(Math.random() * (max - min + 1)) + min;
-        }
+    <!-- Плавающие неоновые надписи -->
+    <div class="floating-neon neon-text">FILLS OFFICIAL</div>
+    <div class="floating-neon neon-text">DLC PROJECTS</div>
+    <div class="floating-neon neon-text">NEON FUTURE</div>
+    <div class="floating-neon neon-text">KRIPTO DLC</div>
 
-        const messageElement = document.getElementById('message');
-        const checkDeviceTime = getRandomTime(4, 9) * 1000; // 4-9 секунд
-        const protectCookiesTime = getRandomTime(3, 5) * 1000; // 3-5 секунд
-        const finalMessageTime = getRandomTime(1, 2) * 1000; // 1-2 секунды
-
-        // Проверка устройства
-        setTimeout(() => {
-            messageElement.textContent = 'Защищаю ваши куки 🍪';
-            messageElement.className = 'cookie-text';
+    <div class="container">
+        <div class="frame">
+            <h1 class="title neon-text">Данный сайт принадлежит пользователю Fills Official</h1>
             
-            // Защита куки
-            setTimeout(() => {
-                messageElement.textContent = 'Ваш куки защищен! Выполняю переадресацию...';
-                messageElement.className = 'cookie-protected';
-                
-                // Переадресация
-                setTimeout(() => {
-                    window.location.href = 'https://funpay.com';
-                }, finalMessageTime);
-            }, protectCookiesTime);
-        }, checkDeviceTime);
-    </script>
+            <p class="list">
+                Все проекты которые принадлежат <strong>F DLC</strong><br>
+                <strong>Nemo</strong> — искусственный интеллект<br>
+                <strong>Fex</strong> — юзер бот для сети телеграм<br>
+                <strong>VFex</strong> — юзер бот для сети ВКонтакте<br>
+                <strong>DBot</strong> — бот администратор для сообществ сети Дискорд
+            </p>
+
+            <p class="warning">
+                «Автор ни в коем случае не просит вас использовать бота в приложении, доступ которого был ограничен на территории РФ, бот скоро прекратит поддержку и будет удалён»
+            </p>
+
+            <div class="domain">fillsteam.ru — сайт на котором вы находитесь</div>
+            <p class="list">Список будет дополнятся..</p>
+
+            <div class="sponsor">Все проекты были спонсированы Kripto DLC</div>
+        </div>
+    </div>
+
+    <div class="footer">
+        2025г. Все права защищены ©
+    </div>
+
 </body>
-  </html>
+</html>
