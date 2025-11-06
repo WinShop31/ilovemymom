@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JAVA - FREE</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: #000;
+            color: #0ff;
+            font-family: 'Courier New', monospace;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        /* Неоновая надпись FREE */
+        .neon-text {
+            font-size: 6rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            text-shadow: 
+                0 0 10px #0ff,
+                0 0 20px #0ff,
+                0 0 40px #0ff,
+                0 0 80px #0ff,
+                0 0 120px #0ff;
+            animation: flicker 2s infinite alternate;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        @keyframes flicker {
+            0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% { opacity: 1; }
+            20%, 22%, 24%, 55% { opacity: 0.7; }
+        }
+
+        /* Полупрозрачная серая рамка */
+        .overlay-box {
+            background-color: rgba(50, 50, 50, 0.7);
+            backdrop-filter: blur(8px);
+            padding: 40px 60px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.3);
+            z-index: 2;
+            max-width: 90%;
+        }
+
+        .download-btn {
+            margin-top: 20px;
+            padding: 14px 32px;
+            font-size: 1.4rem;
+            font-weight: bold;
+            color: #000;
+            background: linear-gradient(45deg, #0ff, #00f);
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.6);
+            transition: all 0.3s ease;
+        }
+
+        .download-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.9);
+            background: linear-gradient(45deg, #00f, #0ff);
+        }
+
+        .date {
+            font-size: 0.9rem;
+            color: #aaa;
+            margin-top: 8px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Неоновая надпись FREE -->
+    <div class="neon-text">FREE</div>
+
+    <!-- Полупрозрачная рамка с кнопкой -->
+    <div class="overlay-box">
+        <button class="download-btn" onclick="downloadFile()">
+            Venus Free
+        </button>
+        <div class="date">(1 Sep.)</div>
+    </div>
+
+    <script>
+        function downloadFile() {
+            // Замените на вашу прямую ссылку на GitHub (raw)
+            const url = 'https://github.com/WinShop31/ilovemymom/raw/main/venusfree.zip';
+            
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'venusfree.zip';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+    </script>
+
+</body>
+  </html>
