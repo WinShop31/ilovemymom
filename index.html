@@ -2,243 +2,77 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Fills Official</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Неоновая надпись</title>
     <style>
-        *, *::before, *::after {
+        body {
             margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body, html {
-            height: 100%;
-            font-family: 'Orbitron', 'Arial', sans-serif;
-            overflow: hidden;
-            background: #000;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background-color: #000;
+            font-family: 'Arial', sans-serif;
             color: #fff;
-            touch-action: pan-x pan-y;
-            -webkit-text-size-adjust: none;
+            overflow: hidden;
         }
 
-        .bg {
-            position: fixed;
-            inset: 0;
-            background: linear-gradient(135deg, #8B00FF, #00BFFF, #8B00FF);
-            background-size: 300% 300%;
-            animation: gradientFlow 12s ease infinite;
-            z-index: -2;
-        }
-
-        @keyframes gradientFlow {
-            0%   { background-position: 0% 50%; }
-            50%  { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
-
-        .neon-text {
+        /* Неоновая надпись */
+        .neon {
+            font-size: 3.5rem;
+            font-weight: bold;
+            text-align: center;
+            color: #fff;
             text-shadow: 
                 0 0 5px #fff,
                 0 0 10px #fff,
-                0 0 20px #8B00FF,
-                0 0 30px #8B00FF,
-                0 0 40px #00BFFF,
-                0 0 50px #00BFFF,
-                0 0 70px #00BFFF;
-            animation: pulse 2s infinite alternate;
+                0 0 20px #fff,
+                0 0 40px #ff00ff,
+                0 0 80px #ff00ff,
+                0 0 90px #ff00ff,
+                0 0 100px #ff00ff,
+                0 0 150px #ff00ff;
+            animation: flicker 1.5s infinite alternate;
         }
 
-        @keyframes pulse {
-            from { text-shadow: 0 0 5px #fff, 0 0 10px #fff, 0 0 20px #8B00FF, 0 0 30px #8B00FF, 0 0 40px #00BFFF, 0 0 50px #00BFFF, 0 0 70px #00BFFF; }
-            to   { text-shadow: 0 0 10px #fff, 0 0 20px #fff, 0 0 30px #8B00FF, 0 0 40px #8B00FF, 0 0 50px #00BFFF, 0 0 70px #00BFFF, 0 0 90px #00BFFF; }
+        @keyframes flicker {
+            0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% {
+                text-shadow: 
+                    0 0 5px #fff,
+                    0 0 10px #fff,
+                    0 0 20px #fff,
+                    0 0 40px #ff00ff,
+                    0 0 80px #ff00ff,
+                    0 0 90px #ff00ff,
+                    0 0 100px #ff00ff,
+                    0 0 150px #ff00ff;
+            }
+            20%, 22%, 24%, 55% {
+                text-shadow: none;
+            }
         }
 
-        .floating-neon {
-            position: absolute;
-            font-weight: 900;
-            font-size: clamp(2.5rem, 7vw, 4rem);
-            opacity: 0.07;
-            pointer-events: none;
-            animation: float 20s infinite linear;
-            white-space: nowrap;
-            text-transform: uppercase;
-            letter-spacing: 0.2em;
-            transform: rotate(-12deg);
-            z-index: -1;
-        }
-
-        .floating-neon:nth-child(1) { top: 10%; left: -30%; animation-duration: 18s; }
-        .floating-neon:nth-child(2) { top: 40%; right: -35%; animation-duration: 22s; animation-delay: -5s; }
-        .floating-neon:nth-child(3) { bottom: 15%; left: -25%; animation-duration: 25s; animation-delay: -10s; }
-        .floating-neon:nth-child(4) { top: 65%; right: -40%; animation-duration: 20s; animation-delay: -8s; }
-
-        @keyframes float {
-            0% { transform: translateX(-100%) rotate(-12deg); }
-            100% { transform: translateX(180%) rotate(-12deg); }
-        }
-
-        .container {
-            position: relative;
-            z-index: 1;
-            height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 1rem;
-        }
-
-        .frame {
-            background: rgba(10, 10, 30, 0.45);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(139, 0, 255, 0.4);
-            border-radius: 20px;
-            padding: clamp(1.5rem, 4.5vw, 2.5rem) clamp(1.2rem, 3.5vw, 2rem);
-            width: 92%;
-            max-width: 800px;
-            box-shadow: 
-                0 0 20px rgba(139, 0, 255, 0.3),
-                0 0 40px rgba(0, 191, 255, 0.2),
-                inset 0 0 30px rgba(139, 0, 255, 0.1);
-            text-align: center;
-            animation: frameGlow 4s infinite alternate;
-        }
-
-        @keyframes frameGlow {
-            from { box-shadow: 0 0 20px rgba(139, 0, 255, 0.3), 0 0 40px rgba(0, 191, 255, 0.2), inset 0 0 30px rgba(139, 0, 255, 0.1); }
-            to   { box-shadow: 0 0 35px rgba(139, 0, 255, 0.5), 0 0 65px rgba(0, 191, 255, 0.4), inset 0 0 40px rgba(139, 0, 255, 0.2); }
-        }
-
-        .title {
-            font-size: clamp(1.3rem, 5.2vw, 1.9rem);
-            font-weight: 700;
-            margin-bottom: 1rem;
-            letter-spacing: 0.05em;
-            background: linear-gradient(90deg, #8B00FF, #00BFFF, #8B00FF);
-            -webkit-background-clip: text;
-            background-clip: text;
-            -webkit-text-fill-color: transparent;
-            animation: titleFlow 6s ease infinite;
-        }
-
-        @keyframes titleFlow {
-            0%, 100% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-        }
-
-        .list {
-            text-align: left;
-            font-size: clamp(0.92rem, 3.6vw, 1.05rem);
-            line-height: 2.1;
-            margin: 1rem 0;
+        /* Обычная белая надпись */
+        .white-text {
+            margin-top: 2rem;
+            font-size: 1.5rem;
             color: #fff;
-            word-break: break-word;
         }
 
-        .list strong {
-            font-weight: 800;
-            text-shadow: 0 0 10px currentColor;
-        }
-
-        .list strong:nth-of-type(1) { color: #8B00FF; }
-        .list strong:nth-of-type(2) { color: #8B00FF; }
-        .list strong:nth-of-type(3) { color: #FF00FF; }
-        .list strong:nth-of-type(4) { color: #00FFFF; }
-        .list strong:nth-of-type(5) { color: #FF6B9D; }
-
-        .warning {
-            font-style: italic;
-            color: #FF6B9D;
-            margin: 1rem 0;
-            font-size: clamp(0.82rem, 3.3vw, 0.92rem);
-            line-height: 1.55;
-            text-shadow: 0 0 8px rgba(255, 107, 157, 0.6);
-            word-break: break-word;
-        }
-
-        .domain {
-            font-family: 'Courier New', monospace;
-            color: #8B00FF;
-            text-shadow: 0 0 10px #8B00FF;
-            margin: 1rem 0;
-            font-weight: bold;
-            font-size: clamp(0.95rem, 3.8vw, 1.05rem);
-        }
-
-        .list + .list {
-            margin-top: 0.3rem;
-            font-size: clamp(0.9rem, 3.5vw, 1rem);
-            color: #ddd;
-        }
-
-        .sponsor {
-            margin-top: 1.5rem;
-            font-size: clamp(0.9rem, 3.7vw, 1.05rem);
-            color: #00FFFF;
-            text-shadow: 0 0 12px #00FFFF;
-            letter-spacing: 0.1em;
-            font-weight: 700;
-        }
-
-        .footer {
-            position: absolute;
-            bottom: 0.8rem;
-            left: 0;
-            right: 0;
-            text-align: center;
-            font-size: clamp(0.75rem, 2.8vw, 0.85rem);
-            color: rgba(255, 255, 255, 0.7);
-            text-shadow: 0 0 5px rgba(139, 0, 255, 0.3);
-        }
-
-        * {
-            -webkit-user-select: none;
-            -moz-user-select: none;
-            user-select: none;
+        .contact {
+            margin-top: 1rem;
+            font-size: 1.2rem;
+            color: #aaa;
         }
     </style>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
 </head>
 <body>
-    <div class="bg"></div>
-
-    <div class="floating-neon neon-text">FILLS OFFICIAL</div>
-    <div class="floating-neon neon-text">DLC PROJECTS</div>
-    <div class="floating-neon neon-text">NEON FUTURE</div>
-    <div class="floating-neon neon-text">KRIPTO DLC</div>
-
-    <div class="container">
-        <div class="frame">
-            <h1 class="title neon-text">Данный сайт принадлежит пользователю Fills Official</h1>
-            
-            <p class="list">
-                Все проекты которые принадлежат <strong>F DLC</strong><br>
-                <strong>Nemo</strong> — искусственный интеллект<br>
-                <strong>Fex</strong> — юзер бот для сети телеграм<br>
-                <strong>VFex</strong> — юзер бот для сети ВКонтакте<br>
-                <strong>DBot</strong> — бот администратор для сообществ сети Дискорд
-            </p>
-
-            <p class="warning">
-                «Автор ни в коем случае не просит вас использовать бота в приложении, доступ которого был ограничен на территории РФ, бот скоро прекратит поддержку и будет удалён»
-            </p>
-
-            <div class="domain">fillsteam.ru — сайт на котором вы находитесь</div>
-            <p class="list">Список будет дополнятся..</p>
-
-            <div class="sponsor">Все проекты были спонсированы Kripto DLC</div>
-        </div>
+    <div class="neon">
+        Увы, но у вас нету доступа к данному интернет ресурсу 🤷‍♂️
     </div>
-
-    <div class="footer">
-        2025г. Все права защищены ©
+    <div class="white-text">
+        Приобрести или попросить доступ можно у @bubuvpn
     </div>
-
-    <script>
-        document.addEventListener('wheel', e => e.ctrlKey && e.preventDefault(), { passive: false });
-        ['gesturestart', 'gesturechange', 'gestureend'].forEach(evt => 
-            document.addEventListener(evt, e => e.preventDefault(), { passive: false })
-        );
-    </script>
 </body>
 </html>
