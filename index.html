@@ -5,12 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Доступ закрыт</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
+        * { margin:0; padding:0; box-sizing:border-box; }
         body {
             height: 100vh;
             display: flex;
@@ -19,30 +14,39 @@
             align-items: center;
             background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460);
             color: #e0e0e0;
-            font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+            font-family: 'Segoe UI', Arial, sans-serif;
             overflow: hidden;
             user-select: none;
         }
-
-        .container {
-            text-align: center;
-            padding: 2rem;
-            max-width: 90%;
-        }
-
+        .container { text-align: center; padding: 2rem; max-width: 90%; }
         h1 {
             font-size: clamp(2.5rem, 8vw, 5rem);
             font-weight: 300;
             letter-spacing: 0.15em;
             text-transform: uppercase;
-            margin-bottom: 2rem;
+            margin-bottom: 3rem;
             background: linear-gradient(90deg, #ffffff, #b0b0b0);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
-            text-shadow: 0 0 40px rgba(255, 255, 255, 0.3);
         }
-
+        .privacy-link {
+            margin-top: 2rem;
+            padding: 0.9rem 2.2rem;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 8px;
+            color: #e0e0e0;
+            text-decoration: none;
+            font-size: 1rem;
+            letter-spacing: 0.05em;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+        .privacy-link:hover {
+            background: rgba(255,255,255,0.2);
+            border-color: rgba(255,255,255,0.4);
+        }
         .copyright {
             margin-top: auto;
             padding-bottom: 3vh;
@@ -50,41 +54,15 @@
             opacity: 0.7;
             letter-spacing: 0.2em;
         }
-
-        /* Лёгкая анимация появления */
-        .container {
-            animation: fadeIn 2s ease-out forwards;
-        }
-
-        @keyframes fadeIn {
-            0% { opacity: 0; transform: translateY(30px); }
-            100% { opacity: 1; transform: translateY(0); }
-        }
-
-        /* Эффект мерцания у заголовка (по желанию можно убрать) */
-        h1::after {
-            content: '';
-            position: absolute;
-            top: 0; left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-            animation: shine 6s infinite;
-        }
-
-        @keyframes shine {
-            0% { left: -100%; }
-            100% { left: 100%; }
-        }
+        .container { animation: fadeIn 2s ease-out; }
+        @keyframes fadeIn { from { opacity:0; transform:translateY(30px); } to { opacity:1; transform:translateY(0); } }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>Увы, доступ к данному сайту имеют только избранные</h1>
+        <a href="/politics.html" class="privacy-link">Политика конфиденциальности</a>
     </div>
-
-    <div class="copyright">
-        2025 г. Все права защищены.
-    </div>
+    <div class="copyright">2025 г. Все права защищены.</div>
 </body>
 </html>
