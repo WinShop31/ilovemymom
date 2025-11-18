@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Политика конфиденциальности</title>
+    <style>
+        body { 
+            min-height:100vh; 
+            background:linear-gradient(135deg,#1a1a2e,#16213e,#0f3460); 
+            color:#e0e0e0; 
+            font-family:'Segoe UI',Arial,sans-serif; 
+            line-height:1.7; 
+            padding:5vh 1rem; 
+            display:flex; 
+            flex-direction:column; 
+        }
+        .container { 
+            max-width:900px; 
+            margin:0 auto; 
+            background:rgba(0,0,0,0.3); 
+            padding:3rem 2.5rem; 
+            border-radius:12px; 
+            box-shadow:0 10px 40px rgba(0,0,0,0.6); 
+            flex:1; 
+        }
+        h1 { text-align:center; font-size:clamp(2rem,6vw,3rem); margin-bottom:2rem; 
+             background:linear-gradient(90deg,#fff,#aaa); -webkit-background-clip:text; 
+             -webkit-text-fill-color:transparent; background-clip:text; }
+        h2 { margin-top:2.5rem; color:#bbd0ff; font-size:1.4rem; }
+        p, li { margin:1rem 0; opacity:0.9; }
+        ul { padding-left:2rem; }
+        a { color:#88aaff; text-decoration:underline; }
+        .footer { text-align:center; padding:2rem 0 1rem; opacity:0.6; font-size:0.9rem; }
+        .lang-switch { text-align:center; margin-bottom:1.5rem; }
+        .lang-switch a { margin:0 10px; color:#ccc; text-decoration:none; }
+        .lang-switch a.active { color:#fff; font-weight:bold; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+
+    <div class="lang-switch">
+        <a href="?lang=ru" class="active">Русский</a> | 
+        <a href="?lang=en">English</a>
+    </div>
+
+    <!-- РУССКАЯ ВЕРСИЯ -->
+    <div id="ru">
+        <h1>Политика конфиденциальности</h1>
+        <p>Дата вступления в силу: 18 ноября 2025 года</p>
+
+        <h2>1. Сбор персональных данных</h2>
+        <p>Настоящий веб-сайт не собирает, не обрабатывает и не хранит никакие персональные данные посетителей. На сайте отсутствуют формы ввода данных, cookies, системы аналитики и сторонние скрипты.</p>
+
+        <h2>2. Логи сервера</h2>
+        <p>Хостинг-провайдер может автоматически фиксировать IP-адреса и техническую информацию о запросах (User-Agent, время доступа и т.п.) исключительно в целях обеспечения безопасности и предотвращения злоупотреблений. Эти данные не используются для идентификации личности и удаляются в сроки, установленные провайдером.</p>
+
+        <h2>3. Ссылки на сторонние ресурсы</h2>
+        <p>Сайт не содержит ссылок на внешние ресурсы. В случае появления таких ссылок в будущем, их использование будет регулироваться политиками соответствующих третьих сторон.</p>
+
+        <h2>4. Изменение Политики</h2>
+        <p>Мы оставляем за собой право вносить изменения в настоящую Политику конфиденциальности. Актуальная версия всегда доступна по адресу, на котором вы находитесь.</p>
+
+        <h2>5. Контакты</h2>
+        <p>По вопросам, связанным с конфиденциальностью, обращайтесь: <a href="https://vk.com/fillsofficial" target="_blank">vk.com/fillsofficial</a></p>
+    </div>
+
+    <!-- АНГЛИЙСКАЯ ВЕРСИЯ (скрыта по умолчанию) -->
+    <div id="en" style="display:none;">
+        <h1>Privacy Policy</h1>
+        <p>Effective date: November 18, 2025</p>
+
+        <h2>1. Collection of Personal Data</h2>
+        <p>This website does not collect, process, or store any personal data of visitors. There are no input forms, cookies, analytics systems, or third-party scripts present on the site.</p>
+
+        <h2>2. Server Logs</h2>
+        <p>The hosting provider may automatically log IP addresses and technical request information (User-Agent, access time, etc.) solely for security purposes and abuse prevention. This data is not used for personal identification and is deleted according to the provider’s retention policy.</p>
+
+        <h2>3. Third-Party Links</h2>
+        <p>The site does not contain links to external resources. Should such links appear in the future, their use will be governed by the respective third-party policies.</p>
+
+        <h2>4. Changes to the Policy</h2>
+        <p>We reserve the right to update this Privacy Policy. The current version is always available at this address.</p>
+
+        <h2>5. Contact Information</h2>
+        <p>For any privacy-related inquiries, please contact: <a href="https://vk.com/fillsofficial" target="_blank">vk.com/fillsofficial</a></p>
+    </div>
+</div>
+
+<div class="footer">© 2025 All rights reserved.</div>
+
+<script>
+    // Простое переключение языка по параметру ?lang=
+    const urlParams = new URLSearchParams(window.location.search);
+    const lang = urlParams.get('lang');
+    if (lang === 'en') {
+        document.getElementById('ru').style.display = 'none';
+        document.getElementById('en').style.display = 'block';
+        document.querySelector('.lang-switch a[href="?lang=ru"]').classList.remove('active');
+        document.querySelector('.lang-switch a[href="?lang=en"]').classList.add('active');
+    }
+</script>
+
+</body>
+</html>
