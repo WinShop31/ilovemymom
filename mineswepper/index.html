@@ -1,0 +1,932 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Сапёр — HTML/CSS/JS</title>
+
+  <!--
+  Краткая документация:
+
+  Пресеты сложности:
+    - Лёгкий: 9x9, 10 мин
+    - Средний: 16x16, 40 мин
+    - Сложный: 30x16, 99 мин
+
+  Как менять размеры/сложность:
+    - Используйте селект «Размер поля» и «Сложность» сверху.
+    - Нажмите «Новая игра» (смайлик) для перезапуска с выбранными параметрами.
+
+  Управление:
+    - Левая кнопка мыши: открыть клетку.
+    - Правая кнопка мыши / Shift+клик: поставить/снять флажок.
+    - Двойной клик по открытой цифре: массовое открытие соседей (если количество флажков вокруг равно числу).
+    - Клавиатура: стрелки — навигация; Enter — открыть; F — флажок.
+    - Тач: один тап — открыть; долгий тап (~400 мс) — флажок; двойной тап по цифре — массовое открытие.
+
+  Особенности:
+    - Первый клик никогда не попадает на мину: мины ставятся после первого безопасного клика.
+    - При проигрыше: открываются все мины, неверные флажки подсвечиваются.
+    - При победе: позитивная анимация.
+    - Доступность: фокусируемые клетки, aria-атрибуты, подсказки для скринридеров.
+  -->
+
+  <style>
+    :root {
+      --bg: #0f1220;
+      --panel: #171a2e;
+      --text: #e8eaf6;
+      --muted: #a1a6c8;
+      --accent: #5b8cff;
+      --accent-2: #11cbd7;
+      --danger: #ff5b6e;
+      --ok: #4cd97b;
+
+      --cell-closed: #1e2240;
+      --cell-open: #252a52;
+      --cell-hover: #2a2f5e;
+      --cell-flag: #ff6b6b;
+      --cell-mine: #ff3b3b;
+      --cell-miss: #f2921d;
+      --cell-focus: #79a8ff;
+
+      --border: #2a3058;
+      --shadow: 0 6px 24px rgba(0,0,0,0.25);
+
+      --transition-fast: 120ms;
+      --transition-med: 180ms;
+      --radius: 12px;
+    }
+
+    [data-theme="light"] {
+      --bg: #f4f7fb;
+      --panel: #ffffff;
+      --text: #101323;
+      --muted: #5b617a;
+      --accent: #3b6dfb;
+      --accent-2: #0db9c6;
+      --danger: #d92b4f;
+      --ok: #1abf60;
+
+      --cell-closed: #e8ecf7;
+      --cell-open: #ffffff;
+      --cell-hover: #dde4f2;
+      --cell-flag: #ff5f7a;
+      --cell-mine: #ff2f52;
+      --cell-miss: #f2921d;
+      --cell-focus: #3b6dfb;
+
+      --border: #d9dfef;
+      --shadow: 0 6px 24px rgba(10, 25, 60, 0.12);
+    }
+
+    * { box-sizing: border-box; }
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", sans-serif;
+      line-height: 1.35;
+    }
+
+    .app {
+      max-width: 1000px;
+      margin: 24px auto;
+      padding: 16px;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 12px;
+    }
+
+    .toolbar {
+      display: grid;
+      grid-template-columns: 1fr auto auto auto;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .select, .button {
+      appearance: none;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 8px 12px;
+      border-radius: 10px;
+      transition: background var(--transition-fast), border-color var(--transition-fast), transform var(--transition-fast);
+      outline: none;
+    }
+
+    .select:focus, .button:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px color-mix(in oklab, var(--accent) 30%, transparent);
+    }
+
+    .button {
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    .button:hover { background: color-mix(in oklab, var(--panel) 85%, var(--accent)); }
+    .button:active { transform: translateY(1px); }
+
+    .status {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .counter {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 8px 12px;
+      min-width: 110px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .emoji-btn {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      border: 1px solid var(--border);
+      background: var(--panel);
+      cursor: pointer;
+      font-size: 22px;
+      line-height: 1;
+      display: grid;
+      place-items: center;
+      transition: transform var(--transition-fast), background var(--transition-fast);
+    }
+    .emoji-btn:hover { background: var(--cell-hover); }
+    .emoji-btn:active { transform: scale(0.98); }
+
+    .grid-wrap {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 10px;
+    }
+
+    .grid {
+      display: grid;
+      gap: 4px;
+      user-select: none;
+      touch-action: manipulation;
+    }
+
+    .cell {
+      width: 36px;
+      height: 36px;
+      display: grid;
+      place-items: center;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--cell-closed);
+      color: var(--text);
+      cursor: pointer;
+      transition: background var(--transition-med), transform var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast);
+      outline: none;
+      position: relative;
+    }
+
+    .cell:hover { background: var(--cell-hover); }
+    .cell:focus-visible {
+      border-color: var(--cell-focus);
+      box-shadow: 0 0 0 3px color-mix(in oklab, var(--cell-focus) 30%, transparent);
+    }
+
+    .cell.open {
+      background: var(--cell-open);
+      cursor: default;
+      transform: translateY(0);
+    }
+
+    .cell.flag::after {
+      content: "🚩";
+      font-size: 18px;
+      transition: transform var(--transition-med);
+      transform: scale(1.1);
+    }
+
+    .cell.mine.open::after {
+      content: "💣";
+      font-size: 18px;
+    }
+
+    .cell.miss::after {
+      content: "❌";
+      font-size: 16px;
+      color: var(--cell-miss);
+    }
+
+    .cell.number-1 { color: #2e8b57; }  /* green */
+    .cell.number-2 { color: #1e6fff; }  /* blue */
+    .cell.number-3 { color: #ff3b3b; }  /* red */
+    .cell.number-4 { color: #7b3bff; }  /* purple */
+    .cell.number-5 { color: #f2921d; }  /* orange */
+    .cell.number-6 { color: #11cbd7; }  /* teal */
+    .cell.number-7 { color: #c2185b; }  /* pinkish */
+    .cell.number-8 { color: #616161; }  /* grey */
+
+    .num {
+      font-weight: 700;
+      transform: scale(0.9);
+      transition: transform var(--transition-med), opacity var(--transition-med);
+    }
+    .cell.open .num { transform: scale(1); opacity: 0.95; }
+
+    /* Responsive sizing tweaks */
+    @media (max-width: 600px) {
+      .cell { width: 32px; height: 32px; border-radius: 6px; }
+      .emoji-btn { width: 40px; height: 40px; }
+      .toolbar { grid-template-columns: 1fr auto auto; }
+      .status { grid-column: 1 / -1; }
+    }
+
+    /* Theme toggle and Info button */
+    .right-tools {
+      display: flex;
+      gap: 8px;
+      justify-content: end;
+      align-items: center;
+    }
+
+    .toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--panel);
+    }
+    .toggle input { accent-color: var(--accent); }
+
+    /* Modal (compact) */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      background: color-mix(in oklab, var(--bg) 60%, transparent);
+      z-index: 50;
+    }
+    .modal-backdrop.show { display: flex; animation: fadeIn var(--transition-med) ease; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+    .modal {
+      width: min(360px, 92vw);
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      box-shadow: var(--shadow);
+      padding: 16px;
+      transform: translateY(10px);
+      animation: slideUp var(--transition-med) ease forwards;
+    }
+    @keyframes slideUp { to { transform: translateY(0); } }
+
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+    .modal-title { font-weight: 700; }
+    .modal-close {
+      border: 1px solid var(--border);
+      background: var(--panel);
+      border-radius: 8px;
+      width: 32px;
+      height: 32px;
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+    }
+    .modal-body {
+      color: var(--muted);
+    }
+
+    /* Win animation confetti-like glow */
+    .win-flash {
+      animation: winFlash 700ms ease-in-out 2;
+    }
+    @keyframes winFlash {
+      0% { box-shadow: 0 0 0 0 rgba(76, 217, 123, 0.0); }
+      50% { box-shadow: 0 0 0 10px rgba(76, 217, 123, 0.15); }
+      100% { box-shadow: 0 0 0 0 rgba(76, 217, 123, 0.0); }
+    }
+  </style>
+</head>
+<body>
+  <div class="app" id="app" data-theme="dark">
+    <div class="panel toolbar" aria-label="Панель управления">
+      <div class="group">
+        <label class="select" aria-label="Размер поля">
+          <span style="margin-right:6px">Размер:</span>
+          <select id="sizeSelect" aria-label="Выбор размера">
+            <option value="9x9">9x9</option>
+            <option value="16x16" selected>16x16</option>
+            <option value="30x16">30x16</option>
+          </select>
+        </label>
+        <label class="select" aria-label="Сложность">
+          <span style="margin-right:6px">Сложность:</span>
+          <select id="difficultySelect" aria-label="Выбор сложности">
+            <option value="easy">Лёгкий (10)</option>
+            <option value="medium" selected>Средний (40)</option>
+            <option value="hard">Сложный (99)</option>
+            <option value="custom">Своя</option>
+          </select>
+        </label>
+        <label class="select" aria-label="Пользовательские мины">
+          <span style="margin-right:6px">Мины:</span>
+          <input id="customMines" type="number" min="1" value="40" style="width:80px;background:transparent;border:none;color:var(--text);outline:none"/>
+        </label>
+      </div>
+
+      <div class="status" role="status" aria-live="polite">
+        <div class="counter" id="mineCounter" aria-label="Осталось мин">
+          <span>💣</span><strong id="minesLeft">0</strong>
+        </div>
+        <button id="newGameBtn" class="emoji-btn" aria-label="Новая игра" title="Новая игра">🙂</button>
+        <div class="counter" id="timer" aria-label="Таймер">
+          <span>⏱️</span><strong id="timeElapsed">0</strong>s
+        </div>
+      </div>
+
+      <div class="right-tools">
+        <label class="toggle" aria-label="Переключатель темы">
+          <span>Тема</span>
+          <input id="themeToggle" type="checkbox" aria-checked="false" />
+        </label>
+        <button id="infoBtn" class="button" aria-haspopup="dialog" aria-controls="infoModal">Info</button>
+      </div>
+    </div>
+
+    <div class="panel grid-wrap">
+      <div id="grid" class="grid" role="grid" aria-label="Игровое поле"></div>
+    </div>
+  </div>
+
+  <!-- Compact modal -->
+  <div id="modalBackdrop" class="modal-backdrop" role="none">
+    <div id="infoModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle" aria-describedby="modalDesc">
+      <div class="modal-header">
+        <div id="modalTitle" class="modal-title">Информация</div>
+        <button class="modal-close" id="modalClose" aria-label="Закрыть">✕</button>
+      </div>
+      <div id="modalDesc" class="modal-body">
+        meta developer @fillsofficial
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ==============================
+    // Minesweeper — Pure JS
+    // Modules: state, init, grid generation, mining, counters, interactions, keyboard, timer, accessibility
+    // ==============================
+
+    // ------- Utilities -------
+    const clamp = (n, min, max) => Math.max(min, Math.min(max, n));
+    const within = (r, c, rows, cols) => r >= 0 && c >= 0 && r < rows && c < cols;
+    const id = (r, c) => `${r}:${c}`;
+
+    // ------- Game Config -------
+    const PRESETS = {
+      "9x9": { rows: 9, cols: 9, mines: 10 },
+      "16x16": { rows: 16, cols: 16, mines: 40 },
+      "30x16": { rows: 16, cols: 30, mines: 99 }
+    };
+
+    // ------- State -------
+    const state = {
+      rows: 16,
+      cols: 16,
+      totalMines: 40,
+      flagsPlaced: 0,
+      openedCount: 0,
+      started: false,
+      over: false,
+      win: false,
+      firstClickDone: false,
+      grid: [], // array of cells
+      cursor: { r: 0, c: 0 },
+      timerId: null,
+      startTs: null,
+    };
+
+    // Cell shape:
+    // { r, c, mine, open, flag, miss, count }
+
+    // ------- Elements -------
+    const appEl = document.getElementById('app');
+    const gridEl = document.getElementById('grid');
+    const sizeSelect = document.getElementById('sizeSelect');
+    const difficultySelect = document.getElementById('difficultySelect');
+    const customMinesInput = document.getElementById('customMines');
+    const newGameBtn = document.getElementById('newGameBtn');
+    const minesLeftEl = document.getElementById('minesLeft');
+    const timerEl = document.getElementById('timeElapsed');
+
+    const themeToggle = document.getElementById('themeToggle');
+    const infoBtn = document.getElementById('infoBtn');
+    const modalBackdrop = document.getElementById('modalBackdrop');
+    const modalClose = document.getElementById('modalClose');
+
+    // ------- Theme -------
+    (function initTheme() {
+      const saved = localStorage.getItem('ms-theme') || 'dark';
+      appEl.setAttribute('data-theme', saved);
+      themeToggle.checked = saved === 'light';
+      themeToggle.setAttribute('aria-checked', saved === 'light');
+      themeToggle.addEventListener('change', () => {
+        const next = themeToggle.checked ? 'light' : 'dark';
+        appEl.setAttribute('data-theme', next);
+        themeToggle.setAttribute('aria-checked', themeToggle.checked ? 'true' : 'false');
+        localStorage.setItem('ms-theme', next);
+      });
+    })();
+
+    // ------- Modal -------
+    function openModal() {
+      modalBackdrop.classList.add('show');
+    }
+    function closeModal() {
+      modalBackdrop.classList.remove('show');
+    }
+    infoBtn.addEventListener('click', openModal);
+    modalClose.addEventListener('click', closeModal);
+    modalBackdrop.addEventListener('click', (e) => {
+      if (e.target === modalBackdrop) closeModal();
+    });
+
+    // ------- Timer -------
+    function resetTimer() {
+      if (state.timerId) clearInterval(state.timerId);
+      state.timerId = null;
+      state.startTs = null;
+      timerEl.textContent = '0';
+    }
+    function startTimer() {
+      if (state.timerId) return;
+      state.startTs = Date.now();
+      state.timerId = setInterval(() => {
+        const s = Math.floor((Date.now() - state.startTs) / 1000);
+        timerEl.textContent = String(s);
+      }, 1000);
+    }
+    function stopTimer() {
+      if (state.timerId) {
+        clearInterval(state.timerId);
+        state.timerId = null;
+      }
+    }
+
+    // ------- Grid Generation -------
+    function createEmptyGrid(rows, cols) {
+      const g = [];
+      for (let r = 0; r < rows; r++) {
+        const row = [];
+        for (let c = 0; c < cols; c++) {
+          row.push({ r, c, mine: false, open: false, flag: false, miss: false, count: 0 });
+        }
+        g.push(row);
+      }
+      return g;
+    }
+
+    function placeMinesAvoiding(g, rows, cols, total, avoidR, avoidC) {
+      // Place mines after first click, avoiding the clicked cell and its neighbors for a fair start
+      const pool = [];
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+          const dist = Math.max(Math.abs(r - avoidR), Math.abs(c - avoidC));
+          const isSafeZone = dist <= 1; // avoid first cell and its 8 neighbors
+          if (!isSafeZone) pool.push({ r, c });
+        }
+      }
+      // Shuffle pool
+      for (let i = pool.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [pool[i], pool[j]] = [pool[j], pool[i]];
+      }
+      const count = Math.min(total, pool.length);
+      for (let i = 0; i < count; i++) {
+        const { r, c } = pool[i];
+        g[r][c].mine = true;
+      }
+      // compute counts
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+          g[r][c].count = countMinesAround(g, r, c, rows, cols);
+        }
+      }
+    }
+
+    function countMinesAround(g, r, c, rows, cols) {
+      if (g[r][c].mine) return 0;
+      let n = 0;
+      for (let dr = -1; dr <= 1; dr++) {
+        for (let dc = -1; dc <= 1; dc++) {
+          if (dr === 0 && dc === 0) continue;
+          const nr = r + dr, nc = c + dc;
+          if (within(nr, nc, rows, cols) && g[nr][nc].mine) n++;
+        }
+      }
+      return n;
+    }
+
+    // ------- Rendering -------
+    function renderGrid() {
+      gridEl.innerHTML = '';
+      gridEl.style.gridTemplateColumns = `repeat(${state.cols}, 1fr)`;
+      gridEl.style.gridTemplateRows = `repeat(${state.rows}, 1fr)`;
+
+      for (let r = 0; r < state.rows; r++) {
+        for (let c = 0; c < state.cols; c++) {
+          const cell = state.grid[r][c];
+          const btn = document.createElement('button');
+          btn.className = 'cell';
+          btn.setAttribute('data-r', r);
+          btn.setAttribute('data-c', c);
+          btn.setAttribute('role', 'gridcell');
+          btn.setAttribute('aria-label', `Клетка ${r+1}:${c+1}`);
+          btn.tabIndex = 0;
+
+          updateCellClasses(btn, cell);
+
+          gridEl.appendChild(btn);
+        }
+      }
+      updateCounters();
+      setCursor(0, 0);
+    }
+
+    function updateCellClasses(btn, cell) {
+      const classes = ['cell'];
+      if (cell.open) classes.push('open');
+      if (cell.flag) classes.push('flag');
+      if (cell.mine && cell.open) classes.push('mine');
+      if (cell.miss) classes.push('miss');
+      btn.className = classes.join(' ');
+
+      btn.textContent = '';
+      if (cell.open && !cell.mine && cell.count > 0) {
+        const span = document.createElement('span');
+        span.className = `num number-${cell.count}`;
+        span.textContent = cell.count;
+        btn.appendChild(span);
+        btn.setAttribute('aria-label', `Открыта: число ${cell.count}`);
+      } else if (!cell.open && cell.flag) {
+        btn.setAttribute('aria-label', 'Флаг');
+      } else if (cell.open && cell.mine) {
+        btn.setAttribute('aria-label', 'Мина');
+      } else if (cell.open) {
+        btn.setAttribute('aria-label', 'Открыта: пустая');
+      } else {
+        btn.setAttribute('aria-label', 'Закрыта');
+      }
+    }
+
+    function redrawCell(r, c) {
+      const idx = r * state.cols + c;
+      const btn = gridEl.children[idx];
+      if (!btn) return;
+      updateCellClasses(btn, state.grid[r][c]);
+    }
+
+    function updateCounters() {
+      const left = clamp(state.totalMines - state.flagsPlaced, 0, state.totalMines);
+      minesLeftEl.textContent = String(left);
+      if (!state.over) {
+        const face = state.started ? '😐' : '🙂';
+        newGameBtn.textContent = face;
+      } else {
+        newGameBtn.textContent = state.win ? '😎' : '☹️';
+      }
+    }
+
+    function setCursor(r, c) {
+      r = clamp(r, 0, state.rows - 1);
+      c = clamp(c, 0, state.cols - 1);
+      state.cursor = { r, c };
+      const idx = r * state.cols + c;
+      const btn = gridEl.children[idx];
+      if (btn) btn.focus();
+    }
+
+    // ------- Game Logic -------
+    function openCell(r, c, fromUser = true) {
+      if (state.over) return;
+      const cell = state.grid[r][c];
+      if (cell.open || cell.flag) return;
+
+      if (!state.firstClickDone) {
+        // Delay mine placement until first safe click
+        placeMinesAvoiding(state.grid, state.rows, state.cols, state.totalMines, r, c);
+        state.firstClickDone = true;
+        state.started = true;
+        startTimer();
+      }
+
+      cell.open = true;
+      state.openedCount++;
+      redrawCell(r, c);
+
+      if (cell.mine) {
+        // Game over — reveal all
+        revealAllMinesAndMarkMisses();
+        state.over = true;
+        state.win = false;
+        stopTimer();
+        updateCounters();
+        gridEl.classList.remove('win-flash');
+        return;
+      }
+
+      if (cell.count === 0) floodOpen(r, c);
+
+      checkWin();
+    }
+
+    function floodOpen(r, c) {
+      const q = [{ r, c }];
+      const seen = new Set([id(r, c)]);
+      while (q.length) {
+        const cur = q.shift();
+        for (let dr = -1; dr <= 1; dr++) {
+          for (let dc = -1; dc <= 1; dc++) {
+            const nr = cur.r + dr, nc = cur.c + dc;
+            if (!within(nr, nc, state.rows, state.cols)) continue;
+            if (dr === 0 && dc === 0) continue;
+            const key = id(nr, nc);
+            const ncell = state.grid[nr][nc];
+            if (ncell.open || ncell.flag) continue;
+            if (seen.has(key)) continue;
+
+            ncell.open = true;
+            state.openedCount++;
+            redrawCell(nr, nc);
+
+            if (ncell.count === 0 && !ncell.mine) {
+              seen.add(key);
+              q.push({ r: nr, c: nc });
+            }
+          }
+        }
+      }
+    }
+
+    function toggleFlag(r, c) {
+      if (state.over) return;
+      const cell = state.grid[r][c];
+      if (cell.open) return;
+      cell.flag = !cell.flag;
+      state.flagsPlaced += cell.flag ? 1 : -1;
+      redrawCell(r, c);
+      updateCounters();
+    }
+
+    function chordOpen(r, c) {
+      const cell = state.grid[r][c];
+      if (!cell.open || cell.count === 0) return;
+      // Count flags around
+      let flags = 0;
+      for (let dr = -1; dr <= 1; dr++) {
+        for (let dc = -1; dc <= 1; dc++) {
+          if (dr === 0 && dc === 0) continue;
+          const nr = r + dr, nc = c + dc;
+          if (!within(nr, nc, state.rows, state.cols)) continue;
+          if (state.grid[nr][nc].flag) flags++;
+        }
+      }
+      if (flags !== cell.count) return;
+
+      // Open neighbors
+      for (let dr = -1; dr <= 1; dr++) {
+        for (let dc = -1; dc <= 1; dc++) {
+          if (dr === 0 && dc === 0) continue;
+          const nr = r + dr, nc = c + dc;
+          if (!within(nr, nc, state.rows, state.cols)) continue;
+          const ncell = state.grid[nr][nc];
+          if (!ncell.open && !ncell.flag) {
+            openCell(nr, nc, false);
+          }
+        }
+      }
+    }
+
+    function revealAllMinesAndMarkMisses() {
+      for (let r = 0; r < state.rows; r++) {
+        for (let c = 0; c < state.cols; c++) {
+          const cell = state.grid[r][c];
+          if (cell.mine) {
+            cell.open = true;
+          } else if (cell.flag && !cell.mine) {
+            cell.miss = true; // wrong flag
+          }
+          redrawCell(r, c);
+        }
+      }
+    }
+
+    function checkWin() {
+      const totalCells = state.rows * state.cols;
+      const nonMineCells = totalCells - state.totalMines;
+      if (state.openedCount >= nonMineCells) {
+        state.over = true;
+        state.win = true;
+        stopTimer();
+        updateCounters();
+        gridEl.classList.add('win-flash');
+      }
+    }
+
+    // ------- Events: Mouse, Touch, Keyboard -------
+    function onCellMouseDown(e) {
+      const btn = e.currentTarget;
+      const r = +btn.getAttribute('data-r');
+      const c = +btn.getAttribute('data-c');
+      const cell = state.grid[r][c];
+      if (state.over) return;
+
+      // Prevent context menu flagging
+      if (e.button === 2 || e.shiftKey) {
+        e.preventDefault();
+        toggleFlag(r, c);
+        return;
+      }
+      if (e.detail === 2) {
+        // double click for chord
+        e.preventDefault();
+        chordOpen(r, c);
+        return;
+      }
+      // left click
+      openCell(r, c);
+    }
+
+    // Block browser context menu on grid
+    gridEl.addEventListener('contextmenu', (e) => e.preventDefault());
+
+    // Attach listeners after render
+    function attachCellListeners() {
+      for (let i = 0; i < gridEl.children.length; i++) {
+        const btn = gridEl.children[i];
+        btn.addEventListener('mousedown', onCellMouseDown);
+        // Touch: tap/double tap/long press
+        let touchStartTs = 0;
+        let longPressTimer = null;
+        let lastTapTs = 0;
+        btn.addEventListener('touchstart', (e) => {
+          touchStartTs = Date.now();
+          const r = +btn.getAttribute('data-r');
+          const c = +btn.getAttribute('data-c');
+          longPressTimer = setTimeout(() => {
+            toggleFlag(r, c);
+            longPressTimer = null;
+          }, 400);
+        }, { passive: true });
+        btn.addEventListener('touchend', (e) => {
+          const r = +btn.getAttribute('data-r');
+          const c = +btn.getAttribute('data-c');
+          if (longPressTimer) {
+            clearTimeout(longPressTimer);
+            longPressTimer = null;
+            const now = Date.now();
+            if (now - lastTapTs < 300) {
+              chordOpen(r, c);
+            } else {
+              openCell(r, c);
+            }
+            lastTapTs = now;
+          }
+        });
+      }
+    }
+
+    // Keyboard navigation
+    document.addEventListener('keydown', (e) => {
+      if (state.over && !['Enter', 'F'].includes(e.key)) return;
+
+      const { r, c } = state.cursor;
+      switch (e.key) {
+        case 'ArrowUp': setCursor(r - 1, c); e.preventDefault(); break;
+        case 'ArrowDown': setCursor(r + 1, c); e.preventDefault(); break;
+        case 'ArrowLeft': setCursor(r, c - 1); e.preventDefault(); break;
+        case 'ArrowRight': setCursor(r, c + 1); e.preventDefault(); break;
+        case 'Enter': openCell(r, c); e.preventDefault(); break;
+        case 'f':
+        case 'F': toggleFlag(r, c); e.preventDefault(); break;
+        default: break;
+      }
+    });
+
+    // ------- New Game / Presets -------
+    function parseSize(value) {
+      const [w, h] = value.split('x').map(Number);
+      return { cols: w, rows: h };
+    }
+
+    function applyDifficulty() {
+      const sizeVal = sizeSelect.value;
+      const { rows, cols } = parseSize(sizeVal);
+      state.rows = rows;
+      state.cols = cols;
+
+      let mines = PRESETS[sizeVal].mines;
+      const diff = difficultySelect.value;
+      if (diff === 'easy') mines = PRESETS[sizeVal].mines === 99 ? 10 : 10;
+      if (diff === 'medium') mines = PRESETS[sizeVal].mines;
+      if (diff === 'hard') {
+        // Roughly 20% more for challenge if not the standard
+        const base = PRESETS[sizeVal].mines;
+        mines = sizeVal === '30x16' ? 99 : Math.round(base * 1.5);
+      }
+      if (diff === 'custom') {
+        const custom = Number(customMinesInput.value || PRESETS[sizeVal].mines);
+        mines = clamp(custom, 1, rows * cols - 9); // keep reasonable
+      }
+      state.totalMines = mines;
+      customMinesInput.value = mines;
+    }
+
+    function newGame() {
+      stopTimer();
+      resetTimer();
+      state.flagsPlaced = 0;
+      state.openedCount = 0;
+      state.over = false;
+      state.win = false;
+      state.started = false;
+      state.firstClickDone = false;
+      state.grid = createEmptyGrid(state.rows, state.cols);
+      gridEl.classList.remove('win-flash');
+      renderGrid();
+      attachCellListeners();
+      updateCounters();
+    }
+
+    sizeSelect.addEventListener('change', () => {
+      applyDifficulty();
+      newGame();
+    });
+
+    difficultySelect.addEventListener('change', () => {
+      applyDifficulty();
+      newGame();
+    });
+
+    customMinesInput.addEventListener('change', () => {
+      difficultySelect.value = 'custom';
+      applyDifficulty();
+      newGame();
+    });
+
+    newGameBtn.addEventListener('click', newGame);
+
+    // ------- Init -------
+    (function init() {
+      applyDifficulty();
+      newGame();
+    })();
+
+    // ------- Accessibility helpers -------
+    // SR hint on hover/focus for numbers
+    gridEl.addEventListener('dblclick', (e) => {
+      const target = e.target.closest('.cell');
+      if (!target) return;
+      const r = +target.getAttribute('data-r');
+      const c = +target.getAttribute('data-c');
+      chordOpen(r, c);
+    });
+
+    // Prevent accidental text selection on fast interactions
+    document.addEventListener('selectstart', (e) => {
+      const el = e.target;
+      if (el.classList && el.classList.contains('cell')) e.preventDefault();
+    });
+  </script>
+</body>
+</html>
