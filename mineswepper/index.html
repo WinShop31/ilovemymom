@@ -1,0 +1,150 @@
+<!-- Страница ожидания для игры Сапёр. meta developer @fillsofficial -->
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Сапёр ушёл на доработку</title>
+  <style>
+    /* Базовые стили для центрирования и минимализма */
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      text-align: center;
+      color: #fff;
+      background: linear-gradient(-45deg, #3a6186, #89253e, #1c92d2, #f2fcfe);
+      background-size: 400% 400%;
+      animation: gradientBG 15s ease infinite;
+    }
+
+    /* Анимация фона */
+    @keyframes gradientBG {
+      0% {background-position: 0% 50%;}
+      50% {background-position: 100% 50%;}
+      100% {background-position: 0% 50%;}
+    }
+
+    .container {
+      max-width: 600px;
+      padding: 20px;
+      animation: fadeIn 2s ease forwards;
+    }
+
+    /* Анимация появления */
+    @keyframes fadeIn {
+      from {opacity: 0; transform: translateY(20px);}
+      to {opacity: 1; transform: translateY(0);}
+    }
+
+    h1 {
+      font-size: 2.5em;
+      margin-bottom: 0.5em;
+    }
+
+    h2 {
+      font-size: 1.5em;
+      margin-bottom: 1em;
+      font-weight: 400;
+    }
+
+    p {
+      font-size: 1.1em;
+      margin-bottom: 2em;
+      line-height: 1.5;
+    }
+
+    .emoji {
+      font-size: 2em;
+      margin-bottom: 0.5em;
+      display: block;
+    }
+
+    .button {
+      padding: 12px 24px;
+      font-size: 1em;
+      border: none;
+      border-radius: 8px;
+      background-color: #ffffff;
+      color: #333;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      opacity: 0.5;
+      pointer-events: none;
+    }
+
+    .button.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .button:hover {
+      background-color: #333;
+      color: #fff;
+      transform: scale(1.05);
+    }
+
+    .countdown {
+      font-size: 1.2em;
+      margin-bottom: 1em;
+    }
+
+    footer {
+      margin-top: 2em;
+      font-size: 0.9em;
+      opacity: 0.7;
+    }
+
+    /* Адаптивность */
+    @media (max-width: 600px) {
+      h1 {font-size: 2em;}
+      h2 {font-size: 1.2em;}
+      p {font-size: 1em;}
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Иконка/эмодзи для атмосферы -->
+    <span class="emoji">⏳🎮</span>
+    <!-- Заголовок -->
+    <h1>Сапёр ушёл на доработку</h1>
+    <!-- Подзаголовок -->
+    <h2>Мы скоро вернёмся с обновлённой версией игры</h2>
+    <!-- Дружелюбное сообщение -->
+    <p>Спасибо за ваше терпение! Сейчас мы улучшаем функционал и дизайн, чтобы сделать игру ещё интереснее и удобнее для вас.</p>
+    <!-- Таймер обратного отсчёта -->
+    <div class="countdown">Попробовать снова можно через <span id="timer">10</span> секунд</div>
+    <!-- Кнопка обновления -->
+    <button id="retryBtn" class="button">Попробовать снова</button>
+    <!-- Подпись -->
+    <footer>meta developer @fillsofficial</footer>
+  </div>
+
+  <script>
+    // Таймер обратного отсчёта
+    let timeLeft = 10;
+    const timerEl = document.getElementById('timer');
+    const retryBtn = document.getElementById('retryBtn');
+
+    const countdown = setInterval(() => {
+      timeLeft--;
+      timerEl.textContent = timeLeft;
+      if (timeLeft <= 0) {
+        clearInterval(countdown);
+        document.querySelector('.countdown').textContent = "Кнопка активна!";
+        retryBtn.classList.add('active');
+      }
+    }, 1000);
+
+    // Обработчик кнопки
+    retryBtn.addEventListener('click', () => {
+      location.reload();
+    });
+  </script>
+</body>
+</html>
