@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="light">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Сапёр — один HTML файл</title>
+  <style>
+    :root {
+      --bg: #f7f7f9;
+      --panel: #ffffff;
+      --text: #1e1e22;
+      --muted: #6b7280;
+      --accent: #2563eb;
+      --danger: #ef4444;
+      --success: #10b981;
+      --cell-bg: #eaecef;
+      --cell-border: #d1d5db;
+      --cell-open: #ffffff;
+      --flag: #f59e0b;
+      --mine: #ef4444;
+      --overlay: rgba(0,0,0,0.5);
+      --focus: #7c3aed;
+      --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 2px 6px rgba(0,0,0,0.06);
+      --transition: 160ms ease;
+      --font: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", sans-serif;
+    }
+    [data-theme="dark"] {
+      --bg: #0f1217;
+      --panel: #161a21;
+      --text: #e5e7eb;
+      --muted: #9ca3af;
+      --accent: #60a5fa;
+      --danger: #f87171;
+      --success: #34d399;
+      --cell-bg: #1e2430;
+      --cell-border: #2a3240;
+      --cell-open: #171a21;
+      --flag: #fbbf24;
+      --mine: #f87171;
+      --overlay: rgba(0,0,0,0.6);
+      --shadow: 0 1px 3px rgba(0,0,0,0.4), 0 2px 6px rgba(0,0,0,0.3);
+      --focus: #a78bfa;
+    }
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      margin: 0;
+    }
+    .app {
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    .topbar {
+      display: grid;
+      grid-template-columns: 1fr auto auto auto auto;
+      grid-gap: 12px;
+      align-items: center;
+      background: var(--panel);
+      border-radius: 12px;
+      box-shadow: var(--shadow);
+      padding: 12px;
+    }
+    .stats {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--cell-bg);
+      color: var(--text);
+      border: 1px solid var(--cell-border);
+      border-radius: 10px;
+      padding: 8px 12px;
+      font-weight: 600;
+      min-height: 36px;
+    }
+    .controls {
+      display: flex;
+      gap: 8px;
+      justify-self: end;
+    }
+    button, .btn {
+      appearance: none;
+      border: 1px solid var(--cell-border);
+      background: var(--panel);
+      color: var(--text);
+      border-radius: 10px;
+      padding: 8px 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background var(--transition), transform var(--transition), border-color var(--transition);
+      min-height: 36px;
+      box-shadow: var(--shadow);
+    }
+    button:hover { background: var(--cell-bg); }
+    button:active { transform: translateY(1px); }
+    button:focus-visible {
+      outline: 3px solid var(--focus);
+      outline-offset: 2px;
+    }
+    select {
+      border: 1px solid var(--cell-border);
+      background: var(--panel);
+      color: var(--text);
+      border-radius: 10px;
+      padding: 8px 12px;
+      min-height: 36px;
+      box-shadow: var(--shadow);
+      font-weight: 600;
+    }
+    .board-wrap {
+      margin-top: 16px;
+      background: var(--panel);
+      border-radius: 16px;
+      box-shadow: var(--shadow);
+      padding: 12px;
+    }
+    .board {
+      display: grid;
+      gap: 4px;
+      justify-content: center;
+      touch-action: manipulation;
+      user-select: none;
+    }
+    .cell {
+      width: 36px;
+      height: 36px;
+      display: grid;
+      place-items: center;
+      border-radius: 8px;
+      background: var(--cell-bg);
+      border: 1px solid var(--cell-border);
+      font-weight: 800;
+      font-size: 16px;
+      line-height: 1;
+      transition: background var(--transition), transform var(--transition), color var(--transition), border-color var(--transition);
+    }
+    .cell:hover { filter: brightness(0.98); }
+    .cell.open {
+      background: var(--cell-open);
+      border-color: var(--cell-border);
+      box-shadow: inset 0 1px 2px rgba(0,0,0,0.06);
+    }
+    .cell.flag { color: var(--flag); }
+    .cell.mine { color: var(--mine); }
+    .cell.disabled { pointer-events: none; opacity: 0.65; }
+    .num1 { color: #2563eb; }
+    .num2 { color: #16a34a; }
+    .num3 { color: #dc2626; }
+    .num4 { color: #7c3aed; }
+    .num5 { color: #f59e0b; }
+    .num6 { color: #0891b2; }
+    .num7 { color: #6b7280; }
+    .num8 { color: #374151; }
+
+    .modal-backdrop {
+      position: fixed; inset: 0;
+      background: var(--overlay);
+      display: none;
+      align-items: center; justify-content: center;
+      padding: 20px;
+      z-index: 50;
+    }
+    .modal-backdrop.show { display: flex; }
+    .modal {
+      background: var(--panel);
+      color: var(--text);
+      border-radius: 16px;
+      box-shadow: var(--shadow);
+      max-width: 560px;
+      width: 100%;
+      padding: 16px;
+      position: relative;
+    }
+    .modal h2 { margin: 0 0 8px 0; }
+    .modal p { margin: 8px 0; color: var(--muted); }
+    .modal .meta { font-size: 14px; color: var(--muted); }
+    .modal .actions { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+    .modal .close {
+      position: absolute; top: 10px; right: 10px;
+      border-radius: 999px;
+      width: 36px; height: 36px;
+      display: grid; place-items: center;
+    }
+
+    /* Phone-friendly scaling */
+    @media (max-width: 480px) {
+      .cell { width: 44px; height: 44px; font-size: 18px; }
+      .topbar { grid-template-columns: 1fr; grid-auto-rows: auto; }
+      .controls { justify-self: start; flex-wrap: wrap; }
+    }
+
+    .sr-only {
+      position: absolute !important;
+      width: 1px; height: 1px;
+      padding: 0; margin: -1px;
+      overflow: hidden; clip: rect(0,0,0,0);
+      white-space: nowrap; border: 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="app" id="app" aria-live="polite">
+    <div class="topbar" role="toolbar" aria-label="Панель управления Сапёра">
+      <div class="stats">
+        <div class="badge" id="timer" aria-label="Таймер">⏱ 0:00</div>
+        <div class="badge" id="minesLeft" aria-label="Осталось мин">💣 0</div>
+        <label class="badge" for="difficulty">
+          <span class="sr-only">Сложность</span>
+          <select id="difficulty" aria-label="Сложность">
+            <option value="easy">Легко</option>
+            <option value="medium" selected>Средне</option>
+            <option value="hard">Сложно</option>
+          </select>
+        </label>
+      </div>
+      <div class="controls">
+        <button id="newGame" aria-label="Новая игра">Новая игра</button>
+        <button id="infoBtn" aria-label="Информация">Info (i)</button>
+        <button id="deviceBtn" aria-label="Сменить устройство">Сменить устройство</button>
+        <button id="themeBtn" aria-label="Переключить тему">Тема</button>
+      </div>
+    </div>
+
+    <div class="board-wrap" aria-label="Игровое поле">
+      <div id="board" class="board" role="grid" aria-label="Сетка клеток"></div>
+    </div>
+  </div>
+
+  <!-- Device choose modal -->
+  <div class="modal-backdrop" id="deviceModalBackdrop" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="deviceModalTitle">
+      <button class="close" id="deviceModalClose" aria-label="Закрыть">×</button>
+      <h2 id="deviceModalTitle">С какого устройства вы играете?</h2>
+      <p>Выбор влияет на размер поля, размеры элементов и управление.</p>
+      <div class="actions">
+        <button id="choosePC">ПК</button>
+        <button id="choosePhone">Телефон</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Info modal -->
+  <div class="modal-backdrop" id="infoModalBackdrop" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="infoTitle">
+      <button class="close" id="infoClose" aria-label="Закрыть">×</button>
+      <h2 id="infoTitle">Информация</h2>
+      <p class="meta">Meta: developer <strong>@fillsofficial</strong></p>
+      <p class="meta">Создано одним HTML файлом</p>
+      <h3>Гайд по управлению</h3>
+      <p><strong>ПК:</strong> ЛКМ — открыть клетку; ПКМ — флаг; двойной клик по цифре — открыть соседние.</p>
+      <p><strong>Телефон:</strong> тап — открыть клетку; долгий тап — флаг; двойной тап по цифре — открыть соседние.</p>
+      <h3>Правила</h3>
+      <p>Цифры показывают количество мин по соседству. Цель — открыть все безопасные клетки, не взорвавшись на мине.</p>
+    </div>
+  </div>
+
+  <script>
+    // ------------------------------
+    // Мини-утилиты и состояние
+    // ------------------------------
+    const $ = sel => document.querySelector(sel);
+    const appState = {
+      device: null,           // 'pc' | 'phone'
+      theme: 'light',         // 'light' | 'dark'
+      difficulty: 'medium',   // 'easy' | 'medium' | 'hard'
+      rows: 16,
+      cols: 16,
+      mines: 40,
+      started: false,
+      startTime: null,
+      timerId: null,
+      firstRevealDone: false,
+      gameOver: false,
+      board: [],              // массив клеток
+      flagsCount: 0,
+    };
+
+    const LS_KEYS = {
+      DEVICE: 'mswp_device',
+      THEME: 'mswp_theme',
+      DIFF: 'mswp_difficulty',
+      SAVE: 'mswp_save'
+    };
+
+    function savePrefs() {
+      localStorage.setItem(LS_KEYS.DEVICE, appState.device || '');
+      localStorage.setItem(LS_KEYS.THEME, appState.theme || 'light');
+      localStorage.setItem(LS_KEYS.DIFF, appState.difficulty || 'medium');
+    }
+
+    function loadPrefs() {
+      const d = localStorage.getItem(LS_KEYS.DEVICE);
+      const t = localStorage.getItem(LS_KEYS.THEME);
+      const diff = localStorage.getItem(LS_KEYS.DIFF);
+      if (d) appState.device = d;
+      if (t) appState.theme = t;
+      if (diff) appState.difficulty = diff;
+      document.documentElement.setAttribute('data-theme', appState.theme);
+      $('#difficulty').value = appState.difficulty;
+    }
+
+    function saveGameState() {
+      const payload = {
+        device: appState.device,
+        theme: appState.theme,
+        difficulty: appState.difficulty,
+        rows: appState.rows,
+        cols: appState.cols,
+        mines: appState.mines,
+        started: appState.started,
+        startTime: appState.startTime,
+        firstRevealDone: appState.firstRevealDone,
+        gameOver: appState.gameOver,
+        flagsCount: appState.flagsCount,
+        board: appState.board.map(c => ({
+          r: c.r, c: c.c,
+          mine: c.mine,
+          open: c.open,
+          flag: c.flag,
+          num: c.num
+        }))
+      };
+      localStorage.setItem(LS_KEYS.SAVE, JSON.stringify(payload));
+      savePrefs();
+    }
+
+    function tryRestoreGame() {
+      const raw = localStorage.getItem(LS_KEYS.SAVE);
+      if (!raw) return false;
+      try {
+        const s = JSON.parse(raw);
+        if (!s || !s.rows || !s.cols || !Array.isArray(s.board)) return false;
+        appState.device = s.device || appState.device;
+        appState.theme = s.theme || appState.theme;
+        appState.difficulty = s.difficulty || appState.difficulty;
+        appState.rows = s.rows; appState.cols = s.cols; appState.mines = s.mines;
+        appState.started = !!s.started;
+        appState.startTime = s.startTime || Date.now();
+        appState.firstRevealDone = !!s.firstRevealDone;
+        appState.gameOver = !!s.gameOver;
+        appState.flagsCount = s.flagsCount || 0;
+        document.documentElement.setAttribute('data-theme', appState.theme);
+        $('#difficulty').value = appState.difficulty;
+        appState.board = s.board.map(x => ({...x}));
+        renderBoard(true);
+        startTimer(true);
+        updateMinesLeft();
+        return true;
+      } catch {
+        return false;
+      }
+    }
+
+    // ------------------------------
+    // Параметры сложности
+    // ------------------------------
+    function applyDifficulty() {
+      const d = appState.difficulty;
+      const isPhone = appState.device === 'phone';
+      if (d === 'easy') {
+        appState.rows = isPhone ? 9 : 10;
+        appState.cols = isPhone ? 9 : 10;
+        appState.mines = isPhone ? 12 : 15;
+      } else if (d === 'medium') {
+        appState.rows = isPhone ? 12 : 16;
+        appState.cols = isPhone ? 12 : 16;
+        appState.mines = isPhone ? 24 : 40;
+      } else { // hard
+        appState.rows = isPhone ? 14 : 20;
+        appState.cols = isPhone ? 10 : 24;
+        appState.mines = isPhone ? 30 : 99;
+      }
+    }
+
+    // ------------------------------
+    // Построение доски
+    // ------------------------------
+    function createEmptyBoard(rows, cols) {
+      const board = [];
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+          board.push({
+            r, c,
+            mine: false,
+            open: false,
+            flag: false,
+            num: 0
+          });
+        }
+      }
+      return board;
+    }
+
+    function idx(r, c) { return r * appState.cols + c; }
+
+    function neighbors(r, c) {
+      const res = [];
+      for (let dr = -1; dr <= 1; dr++) {
+        for (let dc = -1; dc <= 1; dc++) {
+          if (dr === 0 && dc === 0) continue;
+          const nr = r + dr, nc = c + dc;
+          if (nr >= 0 && nr < appState.rows && nc >= 0 && nc < appState.cols) {
+            res.push({ r: nr, c: nc, i: idx(nr, nc) });
+          }
+        }
+      }
+      return res;
+    }
+
+    function placeMinesAvoidingFirstClick(fr, fc) {
+      let placed = 0;
+      const forbid = new Set([idx(fr, fc), ...neighbors(fr, fc).map(n => idx(n.r, n.c))]);
+      while (placed < appState.mines) {
+        const r = Math.floor(Math.random() * appState.rows);
+        const c = Math.floor(Math.random() * appState.cols);
+        const i = idx(r, c);
+        if (forbid.has(i)) continue;
+        const cell = appState.board[i];
+        if (!cell.mine) {
+          cell.mine = true;
+          placed++;
+        }
+      }
+      // compute numbers
+      for (let r = 0; r < appState.rows; r++) {
+        for (let c = 0; c < appState.cols; c++) {
+          const i = idx(r, c);
+          const cell = appState.board[i];
+          if (cell.mine) { cell.num = 0; continue; }
+          const ns = neighbors(r, c);
+          cell.num = ns.reduce((acc, n) => acc + (appState.board[n.i].mine ? 1 : 0), 0);
+        }
+      }
+    }
+
+    // ------------------------------
+    // Рендер
+    // ------------------------------
+    function renderBoard(fromRestore=false) {
+      const boardEl = $('#board');
+      boardEl.innerHTML = '';
+      boardEl.style.gridTemplateColumns = `repeat(${appState.cols}, 1fr)`;
+      appState.board.forEach(cell => {
+        const div = document.createElement('button');
+        div.className = 'cell';
+        div.setAttribute('role', 'gridcell');
+        div.setAttribute('data-r', cell.r);
+        div.setAttribute('data-c', cell.c);
+        div.setAttribute('aria-label', 'Клетка');
+        if (cell.open) {
+          div.classList.add('open');
+          if (cell.mine) {
+            div.classList.add('mine');
+            div.textContent = '💣';
+          } else if (cell.num > 0) {
+            div.classList.add('num' + cell.num);
+            div.textContent = String(cell.num);
+          } else {
+            div.textContent = '';
+          }
+        } else {
+          if (cell.flag) {
+            div.classList.add('flag');
+            div.textContent = '🚩';
+          } else {
+            div.textContent = '';
+          }
+        }
+        if (appState.gameOver) div.classList.add('disabled');
+        boardEl.appendChild(div);
+      });
+      if (!fromRestore) updateMinesLeft();
+    }
+
+    function updateMinesLeft() {
+      const left = appState.mines - appState.board.filter(c => c.flag).length;
+      $('#minesLeft').textContent = `💣 ${left}`;
+    }
+
+    function startTimer(resume=false) {
+      clearInterval(appState.timerId);
+      const start = resume ? appState.startTime : Date.now();
+      appState.startTime = start;
+      appState.timerId = setInterval(() => {
+        const secs = Math.floor((Date.now() - appState.startTime) / 1000);
+        const m = Math.floor(secs / 60);
+        const s = secs % 60;
+        $('#timer').textContent = `⏱ ${m}:${String(s).padStart(2,'0')}`;
+      }, 200);
+    }
+
+    function stopTimer() {
+      clearInterval(appState.timerId);
+      appState.timerId = null;
+    }
+
+    // ------------------------------
+    // Игровая логика
+    // ------------------------------
+    function newGame(resetFirstReveal=true) {
+      applyDifficulty();
+      appState.board = createEmptyBoard(appState.rows, appState.cols);
+      appState.flagsCount = 0;
+      appState.gameOver = false;
+      if (resetFirstReveal) appState.firstRevealDone = false;
+      appState.started = true;
+      startTimer(false);
+      renderBoard();
+      saveGameState();
+    }
+
+    function revealCell(r, c) {
+      if (appState.gameOver) return;
+      const i = idx(r, c);
+      const cell = appState.board[i];
+      if (cell.open || cell.flag) return;
+
+      if (!appState.firstRevealDone) {
+        placeMinesAvoidingFirstClick(r, c);
+        appState.firstRevealDone = true;
+      }
+
+      cell.open = true;
+
+      if (cell.mine) {
+        // game over
+        appState.gameOver = true;
+        stopTimer();
+        // reveal all mines
+        appState.board.forEach(c => { if (c.mine) c.open = true; });
+        renderBoard();
+        announce('Вы проиграли 💥');
+        saveGameState();
+        return;
+      }
+
+      // flood fill
+      if (cell.num === 0) {
+        floodReveal(r, c);
+      }
+
+      renderBoard();
+      checkWin();
+      saveGameState();
+    }
+
+    function floodReveal(r, c) {
+      const queue = [{r, c}];
+      const visited = new Set([idx(r, c)]);
+      while (queue.length) {
+        const {r: cr, c: cc} = queue.shift();
+        neighbors(cr, cc).forEach(n => {
+          const ci = idx(n.r, n.c);
+          if (visited.has(ci)) return;
+          const ccx = appState.board[ci];
+          if (ccx.flag || ccx.open) return;
+          ccx.open = true;
+          visited.add(ci);
+          if (ccx.num === 0 && !ccx.mine) queue.push({r: n.r, c: n.c});
+        });
+      }
+    }
+
+    function toggleFlag(r, c) {
+      if (appState.gameOver) return;
+      const i = idx(r, c);
+      const cell = appState.board[i];
+      if (cell.open) return;
+      cell.flag = !cell.flag;
+      renderBoard();
+      updateMinesLeft();
+      saveGameState();
+    }
+
+    function chordOpen(r, c) {
+      // If number cell and flags around >= its num, open non-flag neighbors
+      const i = idx(r, c);
+      const cell = appState.board[i];
+      if (!cell.open || cell.num === 0) return;
+      const ns = neighbors(r, c);
+      const flagsAround = ns.reduce((acc, n) => acc + (appState.board[n.i].flag ? 1 : 0), 0);
+      if (flagsAround >= cell.num) {
+        for (const n of ns) {
+          const cx = appState.board[n.i];
+          if (!cx.open && !cx.flag) revealCell(n.r, n.c);
+        }
+      }
+    }
+
+    function checkWin() {
+      const unopened = appState.board.filter(c => !c.open && !c.mine).length;
+      if (unopened === 0 && appState.firstRevealDone) {
+        appState.gameOver = true;
+        stopTimer();
+        announce('Победа! 🏆');
+      }
+    }
+
+    function announce(msg) {
+      const live = $('#app');
+      live.setAttribute('aria-label', msg);
+    }
+
+    // ------------------------------
+    // События: мышь и сенсор
+    // ------------------------------
+    let tapTimer = null;
+    let lastTapTime = 0;
+    let longPressTimer = null;
+
+    function handleCellPointerDown(e) {
+      const target = e.target.closest('.cell');
+      if (!target) return;
+      const r = +target.getAttribute('data-r');
+      const c = +target.getAttribute('data-c');
+
+      if (appState.device === 'phone') {
+        // Double tap detection
+        const now = Date.now();
+        if (now - lastTapTime < 300) {
+          // double tap
+          chordOpen(r, c);
+          lastTapTime = 0;
+          e.preventDefault();
+          return;
+        }
+        lastTapTime = now;
+
+        // Long press for flag
+        clearTimeout(longPressTimer);
+        longPressTimer = setTimeout(() => {
+          toggleFlag(r, c);
+          longPressTimer = null;
+        }, 450);
+      }
+    }
+
+    function handleCellPointerUp(e) {
+      const target = e.target.closest('.cell');
+      if (!target) return;
+      const r = +target.getAttribute('data-r');
+      const c = +target.getAttribute('data-c');
+
+      if (appState.device === 'phone') {
+        // If long press already flagged, do nothing; else reveal
+        if (longPressTimer) {
+          clearTimeout(longPressTimer);
+          longPressTimer = null;
+          revealCell(r, c);
+        }
+        e.preventDefault();
+        return;
+      }
+    }
+
+    function handleCellClick(e) {
+      // For PC left click reveals
+      if (appState.device !== 'pc') return;
+      const target = e.target.closest('.cell');
+      if (!target) return;
+      const r = +target.getAttribute('data-r');
+      const c = +target.getAttribute('data-c');
+      revealCell(r, c);
+      e.preventDefault();
+    }
+
+    function handleCellDblClick(e) {
+      if (appState.device !== 'pc') return;
+      const target = e.target.closest('.cell');
+      if (!target) return;
+      const r = +target.getAttribute('data-r');
+      const c = +target.getAttribute('data-c');
+      chordOpen(r, c);
+      e.preventDefault();
+    }
+
+    function handleContextMenu(e) {
+      // Right-click for flag on PC
+      if (appState.device !== 'pc') return;
+      const target = e.target.closest('.cell');
+      if (!target) return;
+      e.preventDefault();
+      const r = +target.getAttribute('data-r');
+      const c = +target.getAttribute('data-c');
+      toggleFlag(r, c);
+    }
+
+    // ------------------------------
+    // Тема
+    // ------------------------------
+    function toggleTheme() {
+      appState.theme = appState.theme === 'light' ? 'dark' : 'light';
+      document.documentElement.setAttribute('data-theme', appState.theme);
+      saveGameState();
+    }
+
+    // ------------------------------
+    // Модалки
+    // ------------------------------
+    function showModal(backdropId) {
+      const el = $(backdropId);
+      el.classList.add('show');
+      el.setAttribute('aria-hidden', 'false');
+    }
+    function hideModal(backdropId) {
+      const el = $(backdropId);
+      el.classList.remove('show');
+      el.setAttribute('aria-hidden', 'true');
+    }
+
+    // ------------------------------
+    // Инициализация
+    // ------------------------------
+    function setDevice(device) {
+      appState.device = device; // 'pc' | 'phone'
+      // Default difficulty per device
+      appState.difficulty = device === 'phone' ? 'easy' : 'medium';
+      $('#difficulty').value = appState.difficulty;
+      applyDifficulty();
+      savePrefs();
+    }
+
+    function init() {
+      loadPrefs();
+      document.documentElement.setAttribute('data-theme', appState.theme);
+
+      // If device unknown, ask
+      if (!appState.device) {
+        showModal('#deviceModalBackdrop');
+      } else {
+        // Try restore
+        if (!tryRestoreGame()) newGame(true);
+      }
+
+      // Board events
+      const boardEl = $('#board');
+      boardEl.addEventListener('click', handleCellClick);
+      boardEl.addEventListener('dblclick', handleCellDblClick);
+      boardEl.addEventListener('contextmenu', handleContextMenu);
+      boardEl.addEventListener('pointerdown', handleCellPointerDown, { passive: true });
+      boardEl.addEventListener('pointerup', handleCellPointerUp);
+
+      // Controls
+      $('#newGame').addEventListener('click', () => { newGame(true); announce('Новая игра'); });
+      $('#infoBtn').addEventListener('click', () => showModal('#infoModalBackdrop'));
+      $('#infoClose').addEventListener('click', () => hideModal('#infoModalBackdrop'));
+      $('#infoModalBackdrop').addEventListener('click', (e) => {
+        if (e.target.id === 'infoModalBackdrop') hideModal('#infoModalBackdrop');
+      });
+
+      $('#deviceBtn').addEventListener('click', () => showModal('#deviceModalBackdrop'));
+      $('#deviceModalClose').addEventListener('click', () => hideModal('#deviceModalBackdrop'));
+      $('#deviceModalBackdrop').addEventListener('click', (e) => {
+        if (e.target.id === 'deviceModalBackdrop') hideModal('#deviceModalBackdrop');
+      });
+      $('#choosePC').addEventListener('click', () => {
+        setDevice('pc');
+        hideModal('#deviceModalBackdrop');
+        newGame(true);
+      });
+      $('#choosePhone').addEventListener('click', () => {
+        setDevice('phone');
+        hideModal('#deviceModalBackdrop');
+        newGame(true);
+      });
+
+      $('#themeBtn').addEventListener('click', toggleTheme);
+
+      $('#difficulty').addEventListener('change', (e) => {
+        appState.difficulty = e.target.value;
+        newGame(true);
+      });
+
+      // Keyboard accessibility: Enter/Space reveal; F flag; C chord
+      document.addEventListener('keydown', (e) => {
+        const active = document.activeElement;
+        if (!active || !active.classList.contains('cell')) return;
+        const r = +active.getAttribute('data-r');
+        const c = +active.getAttribute('data-c');
+        if (e.key === 'Enter' || e.key === ' ') {
+          revealCell(r, c);
+          e.preventDefault();
+        } else if (e.key.toLowerCase() === 'f') {
+          toggleFlag(r, c);
+          e.preventDefault();
+        } else if (e.key.toLowerCase() === 'c') {
+          chordOpen(r, c);
+          e.preventDefault();
+        }
+      });
+    }
+
+    // ------------------------------
+    // Проверка работоспособности (самотест)
+    // ------------------------------
+    function selfTest() {
+      // Быстрая проверка DOM и основных узлов
+      const ok = !!$('#board') && !!$('#newGame') && !!$('#infoBtn') && !!$('#deviceBtn') && !!$('#themeBtn') && !!$('#difficulty');
+      if (!ok) console.warn('Самотест: отсутствуют ключевые элементы управления.');
+      // Проверим базовые функции
+      const funcs = [createEmptyBoard, placeMinesAvoidingFirstClick, revealCell, toggleFlag, chordOpen, startTimer, updateMinesLeft, saveGameState, tryRestoreGame];
+      funcs.forEach(fn => { if (typeof fn !== 'function') console.warn('Самотест: функция недоступна', fn); });
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      init();
+      selfTest();
+    });
+  </script>
+</body>
+</html>
