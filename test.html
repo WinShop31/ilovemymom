@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <title>Camera Draw</title>
+  <style>
+    body { margin: 0; background: #111; color: #eee; font-family: system-ui, sans-serif; }
+    .wrap { position: relative; width: 100vw; height: 100vh; overflow: hidden; }
+    video, canvas { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+    .hud { position: absolute; top: 12px; left: 12px; background: rgba(0,0,0,.5); padding: 8px 12px; border-radius: 8px; }
+    .controls { position: absolute; bottom: 12px; left: 12px; background: rgba(0,0,0,.5); padding: 8px 12px; border-radius: 8px; display: flex; gap: 8px; }
+    button, input { background: #222; color: #eee; border: 1px solid #444; border-radius: 6px; padding: 6px 10px; }
+    .dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; margin-left: 8px; vertical-align: middle; }
+  </style>
+  <!-- MediaPipe Hands CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
+</head>
+<body>
+  <div class="wrap">
+    <video id="video" playsinline></video>
+    <canvas id="canvas"></canvas>
+    <div class="hud">Draw: <span id="state">OFF</span><span id="dot" class="dot" style="background:#6aa0ff"></span></div>
+    <div class="controls">
+      <label>Цвет <input type="color" id="color" value="#000000"></label>
+      <label>Толщина <input type="range" id="size" min="1" max="20" value="4"></label>
+      <button id="clear">Очистить (R)</button>
+      <label><input type="checkbox" id="show" checked> Показать ориентиры</label>
+    </div>
+  </div>
+
+  <script>
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const stateEl = document.getElementById('state');
+    const dotEl = document.getElementById('dot');
+    const colorEl = document.getElementById('color');
+    const sizeEl = document.getElementById('size');
+    const showEl = document.getElementById('show');
+    const clearBtn = document.getElementById('clear');
+
+    let drawing = false;
+    let lastPoint = null;
+    let penColor = colorEl.value;
+    let penSize = parseInt(sizeEl.value, 10);
+    let width = 0, height = 0;
+
+    function resize() {
+      width = video.clientWidth;
+      height = video.clientHeight;
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = Math.floor(width * dpr);
+      canvas.height = Math.floor(height * dpr);
+      canvas.style.width = width + 'px';
+      canvas.style.height = height + 'px';
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+    window.addEventListener('resize', resize);
+
+    colorEl.addEventListener('input', e => penColor = e.target.value);
+    sizeEl.addEventListener('input', e => penSize = parseInt(e.target.value, 10));
+    clearBtn.addEventListener('click', () => ctx.clearRect(0, 0, canvas.width, canvas.height));
+    window.addEventListener('keydown', e => {
+      if (e.key.toLowerCase() === 'r') ctx.clearRect(0, 0, canvas.width, canvas.height);
+      if (e.key === '+') penSize = Math.min(20, penSize + 1);
+      if (e.key === '-') penSize = Math.max(1, penSize - 1);
+      if (e.key.toLowerCase() === 'c') {
+        // быстрая смена цвета по циклу
+        const palette = ['#000000', '#ff3b30', '#34c759', '#007aff', '#ffcc00', '#ffffff'];
+        const i = (palette.indexOf(penColor) + 1) % palette.length;
+        penColor = palette[i];
+        colorEl.value = penColor;
+      }
+    });
+
+    // Гистерезисные пороги для щепки
+    const PINCH_ON = 0.035;
+    const PINCH_OFF = 0.045;
+    // Сглаживание расстояния
+    let smoothDist = null;
+    const alpha = 0.35;
+
+    // MediaPipe Hands
+    const hands = new Hands({
+      locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
+    });
+    hands.setOptions({
+      maxNumHands: 2,
+      modelComplexity: 1,
+      minDetectionConfidence: 0.6,
+      minTrackingConfidence: 0.6
+    });
+
+    hands.onResults(onResults);
+
+    async function setupCamera() {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false });
+      video.srcObject = stream;
+      await video.play();
+      resize();
+      const camera = new Camera(video, {
+        onFrame: async () => { await hands.send({ image: video }); },
+        width: 1280, height: 720
+      });
+      camera.start();
+    }
+
+    function normDistance(a, b) {
+      const dx = a.x - b.x;
+      const dy = a.y - b.y;
+      // координаты landmark уже нормированы в [0,1], используем ширину для нормировки
+      return Math.sqrt(dx*dx + dy*dy);
+    }
+
+    function screenPoint(lm) {
+      // Перевод нормированных координат в пиксели экрана
+      return { x: lm.x * width, y: lm.y * height };
+    }
+
+    function setDrawState(on) {
+      if (drawing === on) return;
+      drawing = on;
+      stateEl.textContent = on ? 'ON' : 'OFF';
+      dotEl.style.background = on ? '#34c759' : '#6aa0ff';
+      if (!on) lastPoint = null;
+    }
+
+    function drawLineTo(p) {
+      if (!lastPoint) {
+        lastPoint = p;
+        return;
+      }
+      ctx.strokeStyle = penColor;
+      ctx.lineWidth = penSize;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.beginPath();
+      ctx.moveTo(lastPoint.x, lastPoint.y);
+      ctx.lineTo(p.x, p.y);
+      ctx.stroke();
+      lastPoint = p;
+    }
+
+    function onResults(results) {
+      if (width === 0 || height === 0) resize();
+
+      // Отрисовка ориентиров (опционально)
+      if (showEl.checked) {
+        const overlay = document.createElement('canvas');
+        overlay.width = canvas.width;
+        overlay.height = canvas.height;
+        overlay.style.position = 'absolute';
+        overlay.style.inset = '0';
+        const octx = overlay.getContext('2d');
+        document.body.appendChild(overlay);
+        document.body.removeChild(overlay);
+        // Лёгкая подсветка: не используем отдельный слой, рисуем прямо на canvas поверх рисунка
+        if (results.multiHandLandmarks) {
+          for (const landmarks of results.multiHandLandmarks) {
+            for (const lm of landmarks) {
+              const p = screenPoint(lm);
+              ctx.fillStyle = 'rgba(255,255,255,0.25)';
+              ctx.beginPath();
+              ctx.arc(p.x, p.y, 3, 0, Math.PI*2);
+              ctx.fill();
+            }
+          }
+        }
+      }
+
+      // Выбор руки и детект щепки
+      let active = null;
+      let minDist = Infinity;
+
+      if (results.multiHandLandmarks && results.multiHandLandmarks.length) {
+        for (const landmarks of results.multiHandLandmarks) {
+          const thumbTip = landmarks[4];
+          const indexTip = landmarks[8];
+          const d = normDistance(thumbTip, indexTip);
+          if (d < minDist) {
+            minDist = d;
+            active = { thumbTip, indexTip };
+          }
+        }
+      }
+
+      if (!active) {
+        setDrawState(false);
+        return;
+      }
+
+      // Сглаживаем расстояние
+      smoothDist = smoothDist == null ? minDist : (alpha * minDist + (1 - alpha) * smoothDist);
+
+      // Гистерезис: переключения без дребезга
+      if (!drawing && smoothDist < PINCH_ON) setDrawState(true);
+      else if (drawing && smoothDist > PINCH_OFF) setDrawState(false);
+
+      // Рисование по указательному пальцу
+      const p = screenPoint(active.indexTip);
+      drawIndicator(p);
+
+      if (drawing) drawLineTo(p);
+    }
+
+    function drawIndicator(p) {
+      // Маленькая точка-индикатор на кончике указательного пальца
+      ctx.save();
+      ctx.fillStyle = drawing ? 'rgba(52,199,89,0.9)' : 'rgba(106,160,255,0.9)';
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, 6, 0, Math.PI*2);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    setupCamera().catch(err => {
+      alert('Нужен доступ к веб-камере. Разрешите использование камеры в браузере.');
+      console.error(err);
+    });
+  </script>
+</body>
+</html>
