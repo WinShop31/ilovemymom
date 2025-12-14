@@ -1,68 +1,129 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Доступ закрыт</title>
-    <style>
-        * { margin:0; padding:0; box-sizing:border-box; }
-        body {
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460);
-            color: #e0e0e0;
-            font-family: 'Segoe UI', Arial, sans-serif;
-            overflow: hidden;
-            user-select: none;
-        }
-        .container { text-align: center; padding: 2rem; max-width: 90%; }
-        h1 {
-            font-size: clamp(2.5rem, 8vw, 5rem);
-            font-weight: 300;
-            letter-spacing: 0.15em;
-            text-transform: uppercase;
-            margin-bottom: 3rem;
-            background: linear-gradient(90deg, #ffffff, #b0b0b0);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-        .privacy-link {
-            margin-top: 2rem;
-            padding: 0.9rem 2.2rem;
-            background: rgba(255,255,255,0.1);
-            border: 1px solid rgba(255,255,255,0.2);
-            border-radius: 8px;
-            color: #e0e0e0;
-            text-decoration: none;
-            font-size: 1rem;
-            letter-spacing: 0.05em;
-            transition: all 0.3s ease;
-            backdrop-filter: blur(10px);
-        }
-        .privacy-link:hover {
-            background: rgba(255,255,255,0.2);
-            border-color: rgba(255,255,255,0.4);
-        }
-        .copyright {
-            margin-top: auto;
-            padding-bottom: 3vh;
-            font-size: clamp(0.9rem, 2.5vw, 1.1rem);
-            opacity: 0.7;
-            letter-spacing: 0.2em;
-        }
-        .container { animation: fadeIn 2s ease-out; }
-        @keyframes fadeIn { from { opacity:0; transform:translateY(30px); } to { opacity:1; transform:translateY(0); } }
-    </style>
+  <meta charset="UTF-8">
+  <title>Главная — Fillsteam</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      margin: 0;
+      background: linear-gradient(135deg, #2563eb, #9333ea);
+      color: #fff;
+      text-align: center;
+    }
+    header {
+      padding: 60px 20px 30px;
+    }
+    header h1 {
+      font-size: 2.5em;
+      margin: 0;
+      text-shadow: 0 2px 6px rgba(0,0,0,0.3);
+    }
+    .projects {
+      background: rgba(255,255,255,0.1);
+      margin: 30px auto;
+      padding: 30px;
+      border-radius: 16px;
+      max-width: 600px;
+      backdrop-filter: blur(6px);
+    }
+    .projects h2 {
+      margin-top: 0;
+      font-size: 1.8em;
+    }
+    button {
+      padding: 12px 24px;
+      margin: 12px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      background: #fff;
+      color: #2563eb;
+      font-weight: bold;
+      font-size: 1em;
+      transition: transform 0.2s, background 0.2s;
+    }
+    button:hover {
+      transform: translateY(-2px);
+      background: #f3f4f6;
+    }
+    footer {
+      margin-top: 50px;
+      padding: 20px;
+      background: rgba(255,255,255,0.1);
+      font-size: 0.9em;
+      backdrop-filter: blur(6px);
+    }
+    /* Модальное окно */
+    .modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.6);
+      align-items: center;
+      justify-content: center;
+      animation: fadeIn 0.3s ease;
+    }
+    .modal-content {
+      background: #fff;
+      color: #333;
+      padding: 30px;
+      border-radius: 12px;
+      max-width: 700px;
+      text-align: left;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+      animation: slideUp 0.3s ease;
+    }
+    .close {
+      float: right;
+      cursor: pointer;
+      font-size: 1.2em;
+      color: #9333ea;
+    }
+    @keyframes fadeIn {
+      from {opacity: 0;}
+      to {opacity: 1;}
+    }
+    @keyframes slideUp {
+      from {transform: translateY(40px); opacity: 0;}
+      to {transform: translateY(0); opacity: 1;}
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Увы, доступ к данному сайту имеют только избранные</h1>
-        <a href="/politics.html" class="privacy-link">Политика конфиденциальности</a>
+  <header>
+    <h1>Теперь мы открыты для всех</h1>
+  </header>
+
+  <div class="projects">
+    <h2>Все наши проекты</h2>
+    <button onclick="location.href='https://fillsteam.ru/mineswepper'">🎮 САПЁР</button>
+    <p>Большинство наших проектов ещё в разработке</p>
+  </div>
+
+  <button onclick="document.getElementById('policyModal').style.display='flex'">📜 Политика конфиденциальности</button>
+
+  <footer>© 2025 г. Все права защищены.</footer>
+
+  <!-- Модальное окно -->
+  <div id="policyModal" class="modal">
+    <div class="modal-content">
+      <span class="close" onclick="document.getElementById('policyModal').style.display='none'">×</span>
+      <h2>Политика конфиденциальности</h2>
+      <div id="policyText"></div>
     </div>
-    <div class="copyright">2025 г. Все права защищены.</div>
+  </div>
+
+  <script>
+    document.getElementById('policyText').innerHTML = `
+      <p><strong>Дата вступления в силу:</strong> 18 ноября 2025 года</p>
+      <p><strong>1. Общие положения</strong><br>Мы уважаем вашу конфиденциальность и обязуемся защищать персональные данные пользователей нашего сайта и игры «Сапёр».</p>
+      <p><strong>2. Сбор информации</strong><br>Мы не собираем персональные данные без вашего согласия. При использовании игры «Сапёр» сохраняются только технические данные (например, настройки устройства, выбранная тема, прогресс игры) в локальном хранилище браузера.</p>
+      <p><strong>3. Использование информации</strong><br>Данные используются исключительно для корректной работы сайта и игры. Мы не передаём ваши данные третьим лицам.</p>
+      <p><strong>4. Безопасность</strong><br>Все сохранённые данные хранятся локально на вашем устройстве. Мы принимаем меры для защиты информации от несанкционированного доступа.</p>
+      <p><strong>5. Изменения политики</strong><br>Мы можем обновлять данную политику. Все изменения будут опубликованы на этой странице.</p>
+      <p><strong>6. Контакты</strong><br>По вопросам конфиденциальности обращайтесь через наш официальный контакт: <a href="https://vk.com/fillsofficial" target="_blank">vk.com/fillsofficial</a></p>
+    `;
+  </script>
 </body>
 </html>
