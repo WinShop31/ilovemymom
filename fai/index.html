@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Filsik AI Chat</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- Стили интро -->
+    <link rel="stylesheet" href="intro.css">
+
+    <!-- Твои основные стили -->
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <!-- INTRO SCREEN -->
+    <div id="intro-screen">
+        <div class="intro-center">
+
+            <!-- Глитч-буква F -->
+            <div class="intro-letter">
+                <span class="f-left">F</span>
+                <span class="f-right">F</span>
+            </div>
+
+            <!-- Осколки -->
+            <canvas id="intro-shards"></canvas>
+
+            <!-- Надпись -->
+            <div class="intro-welcome">Добро пожаловать!</div>
+
+            <!-- Глитч-сужающийся круг -->
+            <div class="intro-mask"></div>
+
+        </div>
+    </div>
+
+    <!-- ОСНОВНОЙ САЙТ -->
+    <div class="root">
+        <div class="app">
+
+            <!-- Sidebar -->
+            <div class="sidebar" id="s0">
+                <div class="sidebar-header">
+                    <div class="sidebar-title-block">
+                        <div class="sidebar-title">Чаты</div>
+                        <div class="sidebar-subtitle" id="sc0"></div>
+                    </div>
+                    <button id="n0" class="sidebar-btn">＋ Новый чат</button>
+                </div>
+
+                <div class="chat-list" id="cl0"></div>
+
+                <div class="sidebar-footer">
+                    <div>Filsik AI Chat</div>
+                    <a href="#" class="sidebar-link">GitHub</a>
+                </div>
+            </div>
+
+            <div class="sidebar-backdrop" id="sb0"></div>
+
+            <!-- Main -->
+            <div class="main">
+                <div class="header">
+                    <div class="controls">
+                        <button class="btn-icon" id="st0">☰</button>
+                        <div class="title-block">
+                            <div class="title" id="ct0">Новый чат</div>
+                            <div class="subtitle" id="cs0">Выбери модель и начни диалог</div>
+                        </div>
+                    </div>
+
+                    <div class="controls">
+                        <select id="m0" class="select">
+                            <option value="alice">🔵 Alice</option>
+                            <option value="gigachat">🟣 GigaChat</option>
+                            <option value="yandexgpt-lite">🟢 YandexGPT Lite</option>
+                        </select>
+                        <button id="cc0" class="btn btn-secondary">Очистить</button>
+                    </div>
+                </div>
+
+                <div class="chat-wrapper">
+                    <div id="c0" class="chat"></div>
+
+                    <div class="status-bar">
+                        <div>
+                            <span class="status-dot"></span>
+                            <span id="st1">Готов к диалогу</span>
+                        </div>
+                        <a href="#" class="small-link">GitHub</a>
+                    </div>
+
+                    <div class="input-area">
+                        <textarea id="i0" class="input" placeholder="Напиши сообщение..." rows="1"></textarea>
+                        <button id="s1" class="btn">➤</button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Логика чата -->
+    <script src="chat.js"></script>
+
+    <!-- Логика интро -->
+    <script src="intro.js"></script>
+
+</body>
+  </html>
