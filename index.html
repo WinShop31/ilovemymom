@@ -2,160 +2,418 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1"> <!-- ВАЖНО для адаптации -->
-  <title>Главная — Fillsteam</title>
+  <title>Fillsteam — проекты</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
-    body {
-      font-family: 'Segoe UI', sans-serif;
+    * {
+      box-sizing: border-box;
       margin: 0;
-      background: linear-gradient(135deg, #2563eb, #9333ea);
-      color: #fff;
-      text-align: center;
-    }
-    header {
-      padding: 60px 20px 30px;
-    }
-    header h1 {
-      font-size: 2.5em;
-      margin: 0;
-      text-shadow: 0 2px 6px rgba(0,0,0,0.3);
-    }
-    .projects {
-      background: rgba(255,255,255,0.1);
-      margin: 30px auto;
-      padding: 30px;
-      border-radius: 16px;
-      max-width: 600px;
-      backdrop-filter: blur(6px);
-    }
-    .projects h2 {
-      margin-top: 0;
-      font-size: 1.8em;
-    }
-    button {
-      padding: 12px 24px;
-      margin: 12px;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      background: #fff;
-      color: #2563eb;
-      font-weight: bold;
-      font-size: 1em;
-      transition: transform 0.2s, background 0.2s;
-    }
-    button:hover {
-      transform: translateY(-2px);
-      background: #f3f4f6;
-    }
-    footer {
-      margin-top: 50px;
-      padding: 20px;
-      background: rgba(255,255,255,0.1);
-      font-size: 0.9em;
-      backdrop-filter: blur(6px);
-    }
-    /* Модальное окно */
-    .modal {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.6);
-      align-items: center;
-      justify-content: center;
-      animation: fadeIn 0.3s ease;
-    }
-    .modal-content {
-      background: #fff;
-      color: #333;
-      padding: 30px;
-      border-radius: 12px;
-      max-width: 700px;
-      text-align: left;
-      box-shadow: 0 6px 20px rgba(0,0,0,0.3);
-      animation: slideUp 0.3s ease;
-    }
-    .close {
-      float: right;
-      cursor: pointer;
-      font-size: 1.2em;
-      color: #9333ea;
-    }
-    @keyframes fadeIn {
-      from {opacity: 0;}
-      to {opacity: 1;}
-    }
-    @keyframes slideUp {
-      from {transform: translateY(40px); opacity: 0;}
-      to {transform: translateY(0); opacity: 1;}
+      padding: 0;
     }
 
-    /* 📱 Адаптация под телефоны */
-    @media (max-width: 768px) {
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: stretch;
+      background: radial-gradient(circle at top, #5d9bff 0, #1f235a 40%, #050618 100%);
+      color: #fff;
+    }
+
+    .page {
+      width: 100%;
+      max-width: 480px;
+      padding: 24px 18px 40px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    header {
+      text-align: left;
+    }
+
+    header h1 {
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    header p {
+      font-size: 14px;
+      opacity: 0.9;
+    }
+
+    .card {
+      background: rgba(12, 14, 40, 0.9);
+      border-radius: 18px;
+      padding: 18px 16px;
+      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45);
+      border: 1px solid rgba(136, 170, 255, 0.25);
+      backdrop-filter: blur(18px);
+    }
+
+    .card-title {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .card-sub {
+      font-size: 13px;
+      color: #cfd6ff;
+      margin-bottom: 14px;
+    }
+
+    .projects-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 6px;
+    }
+
+    .project-item {
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .project-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #8adfff;
+      box-shadow: 0 0 6px #8adfff;
+    }
+
+    .btn-row {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      border-radius: 999px;
+      padding: 10px 14px;
+      font-size: 14px;
+      font-weight: 600;
+      border: 1px solid transparent;
+      cursor: pointer;
+      text-decoration: none;
+      transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.12s ease, border-color 0.12s ease;
+      white-space: nowrap;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #4e8cff, #8b5dff);
+      color: #fff;
+      box-shadow: 0 10px 25px rgba(27, 93, 255, 0.4);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 14px 30px rgba(27, 93, 255, 0.6);
+    }
+
+    .btn-outline {
+      background: transparent;
+      color: #e0e4ff;
+      border-color: rgba(159, 182, 255, 0.7);
+    }
+
+    .btn-outline:hover {
+      background: rgba(255, 255, 255, 0.04);
+      transform: translateY(-1px);
+    }
+
+    .btn span {
+      font-size: 12px;
+      opacity: 0.85;
+    }
+
+    .privacy-link {
+      margin-top: 4px;
+      font-size: 12px;
+      opacity: 0.75;
+      cursor: pointer;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+
+    footer {
+      margin-top: auto;
+      font-size: 11px;
+      opacity: 0.75;
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    footer a {
+      color: inherit;
+      text-decoration: none;
+      border-bottom: 1px dashed rgba(255, 255, 255, 0.3);
+      text-underline-offset: 3px;
+    }
+
+    footer a:hover {
+      border-bottom-style: solid;
+    }
+
+    /* Модалка политики */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(3, 4, 16, 0.7);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+      z-index: 999;
+    }
+
+    .modal {
+      max-width: 520px;
+      width: 100%;
+      max-height: 90vh;
+      background: rgba(7, 9, 30, 0.98);
+      border-radius: 18px;
+      border: 1px solid rgba(154, 180, 255, 0.3);
+      box-shadow: 0 22px 60px rgba(0, 0, 0, 0.65);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .modal-header {
+      padding: 14px 16px 8px;
+      border-bottom: 1px solid rgba(101, 126, 208, 0.4);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .modal-header h2 {
+      font-size: 16px;
+      font-weight: 600;
+    }
+
+    .modal-close {
+      border: none;
+      background: transparent;
+      color: #cfd6ff;
+      cursor: pointer;
+      font-size: 18px;
+      line-height: 1;
+      padding: 4px 6px;
+      border-radius: 999px;
+    }
+
+    .modal-close:hover {
+      background: rgba(255, 255, 255, 0.06);
+    }
+
+    .modal-body {
+      padding: 12px 16px 14px;
+      overflow-y: auto;
+      font-size: 13px;
+      line-height: 1.5;
+      color: #d7ddff;
+    }
+
+    .modal-body h3 {
+      font-size: 14px;
+      margin-top: 10px;
+      margin-bottom: 4px;
+      font-weight: 600;
+      color: #f2f3ff;
+    }
+
+    .modal-body p {
+      margin-bottom: 6px;
+    }
+
+    .modal-body ul {
+      margin: 4px 0 8px 16px;
+    }
+
+    .modal-body li {
+      margin-bottom: 3px;
+    }
+
+    @media (min-width: 640px) {
+      .page {
+        padding-top: 40px;
+      }
+
       header h1 {
-        font-size: 1.8em;
-        padding: 20px;
-      }
-      .projects {
-        margin: 15px;
-        padding: 20px;
-        max-width: 100%;
-      }
-      .projects h2 {
-        font-size: 1.4em;
-      }
-      button {
-        width: 100%;
-        margin: 10px 0;
-        font-size: 1.1em;
-        padding: 14px;
-      }
-      .modal-content {
-        width: 95%;
-        padding: 20px;
-        font-size: 0.95em;
-      }
-      footer {
-        font-size: 0.8em;
-        padding: 12px;
+        font-size: 26px;
       }
     }
   </style>
 </head>
 <body>
-  <header>
-    <h1>Теперь мы открыты для всех</h1>
-  </header>
+  <div class="page">
+    <header>
+      <h1>Теперь мы открыты для всех</h1>
+      <p>Актуальные проекты Fillsteam</p>
+    </header>
 
-  <div class="projects">
-    <h2>Все наши проекты</h2>
-    <button onclick="location.href='https://fillsteam.ru/mineswepper'">🎮 САПЁР</button>
-    <p>Большинство наших проектов ещё в разработке</p>
+    <section class="card">
+      <div class="card-title">
+        <span>Все наши проекты</span>
+      </div>
+      <p class="card-sub">Большинство проектов всё ещё в активной разработке.</p>
+
+      <div class="projects-list">
+        <div class="project-item">
+          <div class="project-dot"></div>
+          <span>🎮 САПЁР</span>
+        </div>
+        <div class="project-item">
+          <div class="project-dot"></div>
+          <span>🤖 FAI — Alfa Test</span>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <a class="btn btn-primary" href="https://fillsteam.ru/mineswepper">
+          САПЁР
+          <span>игра</span>
+        </a>
+        <a class="btn btn-outline" href="https://fillsteam.ru/fai">
+          FAI — Alfa Test
+          <span>Алиса, GigaChat, YandexGPT-Lite</span>
+        </a>
+      </div>
+
+      <div class="privacy-link" id="open-privacy">
+        Политика конфиденциальности
+      </div>
+    </section>
+
+    <footer>
+      <span>© 2025 г. Все права защищены.</span>
+      <a href="https://vk.com/fillsofficial" target="_blank" rel="noopener noreferrer">
+        vk.com/fillsofficial
+      </a>
+    </footer>
   </div>
 
-  <button onclick="document.getElementById('policyModal').style.display='flex'">📜 Политика конфиденциальности</button>
+  <!-- Модальное окно политики -->
+  <div class="modal-backdrop" id="privacy-modal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2>Политика конфиденциальности</h2>
+        <button class="modal-close" id="close-privacy" aria-label="Закрыть">×</button>
+      </div>
+      <div class="modal-body">
+        <p>
+          Настоящая политика конфиденциальности описывает, какие данные обрабатываются на сайте
+          <strong>fillsteam.ru</strong>, в игре <strong>«САПЁР»</strong> и в нейросетевом сервисе
+          <strong>FAI</strong> (Алиса, GigaChat, YandexGPT-Lite), и как они используются.
+        </p>
 
-  <footer>© 2025 г. Все права защищены.</footer>
+        <h3>1. Оператор данных</h3>
+        <p>
+          Оператором сайта и сервиса является владелец проекта Fillsteam. Для связи:
+          <a href="https://vk.com/fillsofficial" target="_blank" rel="noopener noreferrer">vk.com/fillsofficial</a>.
+        </p>
 
-  <!-- Модальное окно -->
-  <div id="policyModal" class="modal">
-    <div class="modal-content">
-      <span class="close" onclick="document.getElementById('policyModal').style.display='none'">×</span>
-      <h2>Политика конфиденциальности</h2>
-      <div id="policyText"></div>
+        <h3>2. Какие данные мы можем получать</h3>
+        <ul>
+          <li>техническая информация о вашем устройстве и браузере (IP-адрес, тип устройства, версия браузера);</li>
+          <li>данные об использовании сайта и игр (просмотренные страницы, нажатые кнопки, базовая статистика);</li>
+          <li>ваши обращения в нашу группу / сообщения для связи;</li>
+          <li>для FAI — текст запросов, который вы отправляете в нейросеть, и ответы моделей.</li>
+        </ul>
+
+        <h3>3. «САПЁР»</h3>
+        <p>
+          В игре «САПЁР» мы можем собирать обезличенную статистику: результаты игр, количество попыток,
+          время сессий и технические данные для защиты от злоупотреблений и улучшения проекта.
+        </p>
+
+        <h3>4. Нейросетевой сервис FAI</h3>
+        <p>
+          FAI предоставляет доступ к моделям Алиса, GigaChat и YandexGPT-Lite. Тексты запросов и ответы моделей
+          могут использоваться для:
+        </p>
+        <ul>
+          <li>обеспечения корректной работы сервиса;</li>
+          <li>диагностики ошибок и улучшения качества ответа;</li>
+          <li>защиты от спама, злоупотреблений и нарушений закона.</li>
+        </ul>
+        <p>
+          При использовании FAI не отправляйте в запросах чувствительные личные данные о себе и других людях
+          (паспортные данные, пароли, банковскую информацию и т. п.).
+        </p>
+
+        <h3>5. Куки и сторонние сервисы</h3>
+        <p>
+          На сайте могут использоваться файлы cookie и сторонние инструменты аналитики для статистики и улучшения
+          работы сервиса. Конкретный перечень может меняться по мере развития проекта.
+        </p>
+
+        <h3>6. Передача данных третьим лицам</h3>
+        <p>
+          Мы не продаём ваши персональные данные. Доступ к данным могут иметь:
+        </p>
+        <ul>
+          <li>поставщики нейросетевых моделей (Алиса, GigaChat, YandexGPT-Lite) — в рамках их собственных правил;</li>
+          <li>провайдеры хостинга и технические подрядчики, если это необходимо для работы сервиса;</li>
+          <li>компетентные органы в случаях, предусмотренных законодательством.</li>
+        </ul>
+
+        <h3>7. Ваши права</h3>
+        <p>
+          Если у вас есть вопросы по данным или вы хотите ограничить их использование, напишите нам в VK:
+          <a href="https://vk.com/fillsofficial" target="_blank" rel="noopener noreferrer">vk.com/fillsofficial</a>.
+        </p>
+
+        <h3>8. Изменения политики</h3>
+        <p>
+          Политика может обновляться по мере развития проекта. Актуальная версия публикуется на сайте
+          <strong>fillsteam.ru</strong>.
+        </p>
+      </div>
     </div>
   </div>
 
   <script>
-    document.getElementById('policyText').innerHTML = `
-      <p><strong>Дата вступления в силу:</strong> 18 ноября 2025 года</p>
-      <p><strong>1. Общие положения</strong><br>Мы уважаем вашу конфиденциальность и обязуемся защищать персональные данные пользователей нашего сайта и игры «Сапёр».</p>
-      <p><strong>2. Сбор информации</strong><br>Мы не собираем персональные данные без вашего согласия. При использовании игры «Сапёр» сохраняются только технические данные (например, настройки устройства, выбранная тема, прогресс игры) в локальном хранилище браузера.</p>
-      <p><strong>3. Использование информации</strong><br>Данные используются исключительно для корректной работы сайта и игры. Мы не передаём ваши данные третьим лицам.</p>
-      <p><strong>4. Безопасность</strong><br>Все сохранённые данные хранятся локально на вашем устройстве. Мы принимаем меры для защиты информации от несанкционированного доступа.</p>
-      <p><strong>5. Изменения политики</strong><br>Мы можем обновлять данную политику. Все изменения будут опубликованы на этой странице.</p>
-      <p><strong>6. Контакты</strong><br>По вопросам конфиденциальности обращайтесь через наш официальный контакт: <a href="https://vk.com/fillsofficial" target="_blank">vk.com/fillsofficial</a></p>
-    `;
+    const openBtn = document.getElementById('open-privacy');
+    const modal = document.getElementById('privacy-modal');
+    const closeBtn = document.getElementById('close-privacy');
+
+    function openModal() {
+      modal.style.display = 'flex';
+    }
+
+    function closeModal() {
+      modal.style.display = 'none';
+    }
+
+    openBtn.addEventListener('click', openModal);
+    closeBtn.addEventListener('click', closeModal);
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) closeModal();
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeModal();
+    });
   </script>
 </body>
 </html>
