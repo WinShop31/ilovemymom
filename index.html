@@ -45,6 +45,51 @@
       opacity: 0.9;
     }
 
+    /* --- Блок статистики --- */
+    .hero-stats {
+      margin-top: 18px;
+      text-align: center;
+      background: linear-gradient(135deg, #4e8cff33, #8b5dff33);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 16px;
+      padding: 16px 12px;
+      box-shadow: 0 0 20px rgba(120, 160, 255, 0.2);
+      backdrop-filter: blur(12px);
+      animation: fadeIn 1s ease-out;
+    }
+
+    .hero-number {
+      font-size: 32px;
+      font-weight: 700;
+      color: #ffffff;
+      text-shadow: 0 0 8px #8adfff;
+      animation: popIn 0.8s ease-out;
+    }
+
+    .hero-text {
+      font-size: 14px;
+      color: #cfd6ff;
+      margin-top: 4px;
+    }
+
+    .hero-thanks {
+      font-size: 13px;
+      color: #ffb6e6;
+      margin-top: 6px;
+      font-style: italic;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes popIn {
+      0% { transform: scale(0.7); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    /* --- Карточка проектов --- */
     .card {
       background: rgba(12, 14, 40, 0.9);
       border-radius: 18px;
@@ -171,7 +216,7 @@
       border-bottom-style: solid;
     }
 
-    /* Модалка политики */
+    /* --- Модалка политики --- */
     .modal-backdrop {
       position: fixed;
       inset: 0;
@@ -269,6 +314,13 @@
     <header>
       <h1>Теперь мы открыты для всех</h1>
       <p>Актуальные проекты Fillsteam</p>
+
+      <!-- Блок статистики -->
+      <div class="hero-stats">
+        <div class="hero-number" id="userCount">0</div>
+        <div class="hero-text">пользователей за всё время</div>
+        <div class="hero-thanks">Спасибо, что остаётесь с нами ❤️</div>
+      </div>
     </header>
 
     <section class="card">
@@ -334,65 +386,71 @@
 
         <h3>2. Какие данные мы можем получать</h3>
         <ul>
-          <li>техническая информация о вашем устройстве и браузере (IP-адрес, тип устройства, версия браузера);</li>
-          <li>данные об использовании сайта и игр (просмотренные страницы, нажатые кнопки, базовая статистика);</li>
-          <li>ваши обращения в нашу группу / сообщения для связи;</li>
-          <li>для FAI — текст запросов, который вы отправляете в нейросеть, и ответы моделей.</li>
+          <li>техническая информация о вашем устройстве и браузере;</li>
+          <li>данные об использовании сайта и игр;</li>
+          <li>ваши обращения в нашу группу;</li>
+          <li>для FAI — текст запросов и ответы моделей.</li>
         </ul>
 
         <h3>3. «САПЁР»</h3>
         <p>
-          В игре «САПЁР» мы можем собирать обезличенную статистику: результаты игр, количество попыток,
-          время сессий и технические данные для защиты от злоупотреблений и улучшения проекта.
+          Мы собираем обезличенную статистику: результаты игр, количество попыток, время сессий.
         </p>
 
         <h3>4. Нейросетевой сервис FAI</h3>
         <p>
-          FAI предоставляет доступ к моделям Алиса, GigaChat и YandexGPT-Lite. Тексты запросов и ответы моделей
-          могут использоваться для:
-        </p>
-        <ul>
-          <li>обеспечения корректной работы сервиса;</li>
-          <li>диагностики ошибок и улучшения качества ответа;</li>
-          <li>защиты от спама, злоупотреблений и нарушений закона.</li>
-        </ul>
-        <p>
-          При использовании FAI не отправляйте в запросах чувствительные личные данные о себе и других людях
-          (паспортные данные, пароли, банковскую информацию и т. п.).
+          Запросы и ответы используются для корректной работы сервиса, диагностики ошибок и защиты от злоупотреблений.
         </p>
 
-        <h3>5. Куки и сторонние сервисы</h3>
+        <h3>5. Куки и аналитика</h3>
         <p>
-          На сайте могут использоваться файлы cookie и сторонние инструменты аналитики для статистики и улучшения
-          работы сервиса. Конкретный перечень может меняться по мере развития проекта.
+          Сайт может использовать cookie и сторонние инструменты аналитики.
         </p>
 
-        <h3>6. Передача данных третьим лицам</h3>
+        <h3>6. Передача данных</h3>
         <p>
-          Мы не продаём ваши персональные данные. Доступ к данным могут иметь:
+          Данные не продаются. Доступ возможен у поставщиков моделей, хостинга и госорганов по закону.
         </p>
-        <ul>
-          <li>поставщики нейросетевых моделей (Алиса, GigaChat, YandexGPT-Lite) — в рамках их собственных правил;</li>
-          <li>провайдеры хостинга и технические подрядчики, если это необходимо для работы сервиса;</li>
-          <li>компетентные органы в случаях, предусмотренных законодательством.</li>
-        </ul>
 
         <h3>7. Ваши права</h3>
         <p>
-          Если у вас есть вопросы по данным или вы хотите ограничить их использование, напишите нам в VK:
+          По вопросам данных пишите нам:  
           <a href="https://vk.com/fillsofficial" target="_blank" rel="noopener noreferrer">vk.com/fillsofficial</a>.
         </p>
 
         <h3>8. Изменения политики</h3>
         <p>
-          Политика может обновляться по мере развития проекта. Актуальная версия публикуется на сайте
-          <strong>fillsteam.ru</strong>.
+          Актуальная версия публикуется на сайте <strong>fillsteam.ru</strong>.
         </p>
       </div>
     </div>
   </div>
 
   <script>
+    /* --- Анимация роста числа --- */
+    function animateNumber(id, start, end, duration) {
+      const element = document.getElementById(id);
+      const range = end - start;
+      let startTime = null;
+
+      function step(timestamp) {
+        if (!startTime) startTime = timestamp;
+        const progress = Math.min((timestamp - startTime) / duration, 1);
+        const value = Math.floor(progress * range + start);
+
+        element.textContent = value.toLocaleString("ru-RU") + "+";
+
+        if (progress < 1) {
+          requestAnimationFrame(step);
+        }
+      }
+
+      requestAnimationFrame(step);
+    }
+
+    animateNumber("userCount", 0, 800000, 1800);
+
+    /* --- Модалка --- */
     const openBtn = document.getElementById('open-privacy');
     const modal = document.getElementById('privacy-modal');
     const closeBtn = document.getElementById('close-privacy');
@@ -416,4 +474,4 @@
     });
   </script>
 </body>
-</html>
+                                     </html>
