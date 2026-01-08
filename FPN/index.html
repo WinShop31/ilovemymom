@@ -1,0 +1,279 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>FPN — Неоновый лендинг (мобильная оптимизация)</title>
+  <style>
+    :root{
+      --bg:#05060a;
+      --neon-cyan:#00f0ff;
+      --neon-pink:#ff2dd4;
+      --neon-purple:#9b5cff;
+      --card-bg: rgba(255,255,255,0.03);
+      --radius:16px;
+      font-family: Inter, "Segoe UI", Roboto, system-ui, -apple-system, "Helvetica Neue", Arial;
+    }
+    html,body{height:100%;margin:0;background:var(--bg);color:#e6f7ff;-webkit-font-smoothing:antialiased;}
+    .wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:28px 16px;box-sizing:border-box;gap:18px;flex-direction:column;}
+
+    header{text-align:center;}
+    .logo{display:inline-block;padding:8px 14px;border-radius:999px;background:linear-gradient(90deg,var(--neon-cyan),var(--neon-pink));color:#051018;font-weight:700;}
+    h1{margin:12px 0 6px;font-size:20px;text-shadow:0 0 8px rgba(155,92,255,0.12);}
+    p.lead{margin:0;color:#bfefff;opacity:0.95;font-size:14px;}
+
+    /* Carousel: use native horizontal scroll + scroll-snap */
+    .carousel{width:100%;max-width:980px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border-radius:18px;padding:18px;box-sizing:border-box;position:relative;overflow:visible;border:1px solid rgba(255,255,255,0.03);}
+    .track{
+      display:flex;
+      gap:14px;
+      overflow-x:auto;
+      scroll-snap-type:x mandatory;
+      -webkit-overflow-scrolling:touch; /* iOS momentum */
+      padding:8px 6px 18px;
+      scroll-behavior:smooth;
+      will-change:scroll-position;
+    }
+
+    /* hide scrollbar */
+    .track::-webkit-scrollbar{height:8px;}
+    .track::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.06);border-radius:999px;}
+    @supports (scrollbar-width: thin){
+      .track{scrollbar-width:thin;scrollbar-color:rgba(255,255,255,0.06) transparent;}
+    }
+
+    .card{
+      scroll-snap-align:center;
+      flex:0 0 78%;
+      min-width:260px;
+      max-width:420px;
+      background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      border-radius:14px;padding:20px;box-sizing:border-box;border:1px solid rgba(255,255,255,0.03);backdrop-filter:blur(6px);
+      position:relative;
+    }
+    .card.alt{background:linear-gradient(180deg, rgba(155,92,255,0.03), rgba(0,240,255,0.02));}
+    .title{font-size:18px;font-weight:700;color:var(--neon-cyan);margin:0 0 8px;}
+    .desc{margin:0;color:#dff9ff;font-size:14px;line-height:1.4;}
+    .neon-tag{display:inline-block;margin-top:12px;padding:6px 10px;border-radius:999px;background:linear-gradient(90deg,var(--neon-pink),var(--neon-purple));color:#05060a;font-weight:700;font-size:12px;}
+
+    /* Controls for larger screens */
+    .controls{position:absolute;top:50%;left:12px;transform:translateY(-50%);display:flex;gap:12px;z-index:10;}
+    .control{width:40px;height:40px;border-radius:10px;display:grid;place-items:center;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.03);cursor:pointer;color:var(--neon-cyan);font-weight:700;}
+    .control.right{left:auto;right:12px;}
+
+    .pagination{display:flex;gap:8px;justify-content:center;margin-top:10px;}
+    .dot{width:10px;height:10px;border-radius:999px;background:rgba(255,255,255,0.06);cursor:pointer;transition:transform .18s, box-shadow .18s;}
+    .dot.active{background:linear-gradient(90deg,var(--neon-cyan),var(--neon-pink));box-shadow:0 0 18px rgba(0,240,255,0.18);transform:scale(1.25);}
+
+    /* Responsive */
+    @media (max-width:720px){
+      .card{flex:0 0 86%;}
+      .logo{font-size:15px;padding:6px 12px;}
+      h1{font-size:18px;}
+      .controls{display:none;}
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="logo">FPN</div>
+      <h1>FPN — Бесплатные VPN сервисы</h1>
+      <p class="lead">Проект, спонсированный на сумму более <strong>120.000₽</strong>. Безопасность и простота.</p>
+    </header>
+
+    <main class="carousel" aria-roledescription="carousel">
+      <div class="controls" aria-hidden="false">
+        <div class="control" id="prev" title="Предыдущая">‹</div>
+      </div>
+      <div class="controls right" aria-hidden="false" style="left:auto; right:12px;">
+        <div class="control" id="next" title="Следующая">›</div>
+      </div>
+
+      <div class="track" id="track" role="list">
+        <article class="card" role="listitem" aria-label="Слайд 1">
+          <div class="title">FPN — проект был спонсирован</div>
+          <p class="desc">Проект был спонсирован на сумму более <strong>120.000₽</strong>, что позволило запустить бесплатные VPN‑сервисы для широкой аудитории.</p>
+          <span class="neon-tag">Финансирование</span>
+        </article>
+
+        <article class="card alt" role="listitem" aria-label="Слайд 2">
+          <div class="title">Полностью бесплатные VPN‑сервисы</div>
+          <p class="desc">Мы предоставляем бесплатный доступ к VPN, чтобы каждый мог защитить свои данные и обойти цензуру.</p>
+          <span class="neon-tag">Бесплатно</span>
+        </article>
+
+        <article class="card" role="listitem" aria-label="Слайд 3">
+          <div class="title">Безопасность пользователей</div>
+          <p class="desc">FPN — в первую очередь про безопасность пользователей: шифрование трафика и защита от утечек.</p>
+          <span class="neon-tag">Безопасность</span>
+        </article>
+
+        <article class="card alt" role="listitem" aria-label="Слайд 4">
+          <div class="title">Мы заботимся о каждом</div>
+          <p class="desc">Конфиденциальность и анонимность — наш приоритет. Минимум логов, максимум приватности.</p>
+          <span class="neon-tag">Приватность</span>
+        </article>
+
+        <article class="card" role="listitem" aria-label="Слайд 5">
+          <div class="title">Скорость и стабильность</div>
+          <p class="desc">Оптимизированные серверы и маршрутизация для высокой скорости и стабильного соединения по всему миру.</p>
+          <span class="neon-tag">Производительность</span>
+        </article>
+
+        <article class="card alt" role="listitem" aria-label="Слайд 6">
+          <div class="title">Простая настройка</div>
+          <p class="desc">Поддержка Windows, macOS, Linux, iOS и Android — настройка занимает считанные минуты.</p>
+          <span class="neon-tag">Кроссплатформенно</span>
+        </article>
+
+        <article class="card" role="listitem" aria-label="Слайд 7">
+          <div class="title">Поддержка и открытый код</div>
+          <p class="desc">Поддержка 24/7 и открытый исходный код проекта для прозрачности и доверия сообщества.</p>
+          <span class="neon-tag">Открытость</span>
+        </article>
+      </div>
+
+      <div class="pagination" id="dots" role="tablist" aria-hidden="false"></div>
+    </main>
+
+    <p style="max-width:980px;text-align:center;color:#bfefff;opacity:0.9;margin-top:8px;">
+      Свайп на мобильных устройствах, перетаскивание мышью и клавиши ← → поддерживаются.
+    </p>
+  </div>
+
+  <script>
+    (function(){
+      const track = document.getElementById('track');
+      const cards = Array.from(track.querySelectorAll('.card'));
+      const prevBtn = document.getElementById('prev');
+      const nextBtn = document.getElementById('next');
+      const dotsWrap = document.getElementById('dots');
+      let activeIndex = 0;
+      const total = cards.length;
+
+      // Create dots
+      for(let i=0;i<total;i++){
+        const d = document.createElement('div');
+        d.className = 'dot' + (i===0 ? ' active' : '');
+        d.dataset.index = i;
+        d.setAttribute('role','tab');
+        d.setAttribute('aria-selected', i===0 ? 'true' : 'false');
+        dotsWrap.appendChild(d);
+      }
+      const dots = Array.from(dotsWrap.children);
+
+      // Helper: scroll card into center
+      function scrollToIndex(i, smooth = true){
+        const card = cards[i];
+        if(!card) return;
+        const container = track;
+        const containerCenter = container.clientWidth / 2;
+        const cardCenter = card.offsetLeft + card.offsetWidth / 2;
+        const target = Math.max(0, cardCenter - containerCenter);
+        container.scrollTo({ left: target, behavior: smooth ? 'smooth' : 'auto' });
+      }
+
+      // Update active dot
+      function setActive(i){
+        activeIndex = i;
+        dots.forEach((dot, idx)=>{
+          dot.classList.toggle('active', idx===i);
+          dot.setAttribute('aria-selected', idx===i ? 'true' : 'false');
+        });
+      }
+
+      // Dots click
+      dots.forEach(d => d.addEventListener('click', (e)=>{
+        const idx = Number(e.currentTarget.dataset.index);
+        scrollToIndex(idx, true);
+      }));
+
+      // Prev/Next
+      prevBtn.addEventListener('click', ()=>{ const idx = Math.max(0, activeIndex-1); scrollToIndex(idx); });
+      nextBtn.addEventListener('click', ()=>{ const idx = Math.min(total-1, activeIndex+1); scrollToIndex(idx); });
+
+      // Keyboard
+      window.addEventListener('keydown', (e)=>{
+        if(e.key === 'ArrowLeft'){ const idx = Math.max(0, activeIndex-1); scrollToIndex(idx); }
+        if(e.key === 'ArrowRight'){ const idx = Math.min(total-1, activeIndex+1); scrollToIndex(idx); }
+      });
+
+      // Pointer drag to scroll (works for mouse and touch)
+      let isDown = false, startX = 0, startScroll = 0, lastMoveTime = 0, lastMoveX = 0;
+      track.addEventListener('pointerdown', (e)=>{
+        isDown = true;
+        track.setPointerCapture(e.pointerId);
+        startX = e.clientX;
+        startScroll = track.scrollLeft;
+        track.style.scrollBehavior = 'auto'; // disable smooth while dragging
+        lastMoveTime = performance.now();
+        lastMoveX = e.clientX;
+      });
+      track.addEventListener('pointermove', (e)=>{
+        if(!isDown) return;
+        const dx = e.clientX - startX;
+        track.scrollLeft = startScroll - dx;
+        // record for velocity
+        lastMoveTime = performance.now();
+        lastMoveX = e.clientX;
+      });
+      track.addEventListener('pointerup', (e)=>{
+        if(!isDown) return;
+        isDown = false;
+        track.releasePointerCapture(e.pointerId);
+        track.style.scrollBehavior = ''; // restore
+        // compute velocity
+        const dt = performance.now() - lastMoveTime || 1;
+        const vx = (e.clientX - lastMoveX) / dt; // px per ms
+        // threshold velocity to change slide
+        const velocityThreshold = 0.35; // tuned for feel
+        // determine nearest card center
+        const containerCenter = track.clientWidth / 2;
+        const scrollCenter = track.scrollLeft + containerCenter;
+        let nearest = 0;
+        let minDist = Infinity;
+        cards.forEach((card, idx)=>{
+          const c = card.offsetLeft + card.offsetWidth/2;
+          const dist = Math.abs(c - scrollCenter);
+          if(dist < minDist){ minDist = dist; nearest = idx; }
+        });
+        // if swipe fast enough, move one more in direction
+        if(Math.abs(vx) > velocityThreshold){
+          if(vx < 0 && nearest < total-1) nearest = nearest + 1;
+          if(vx > 0 && nearest > 0) nearest = nearest - 1;
+        }
+        scrollToIndex(nearest, true);
+      });
+      track.addEventListener('pointercancel', ()=>{ isDown=false; });
+
+      // IntersectionObserver to detect centered card
+      const observer = new IntersectionObserver((entries)=>{
+        // find entry with largest intersection ratio
+        let best = null;
+        entries.forEach(en=>{
+          if(!best || en.intersectionRatio > best.intersectionRatio) best = en;
+        });
+        if(best){
+          const idx = cards.indexOf(best.target);
+          if(idx !== -1) setActive(idx);
+        }
+      }, {
+        root: track,
+        threshold: [0.5, 0.6, 0.75, 0.9]
+      });
+      cards.forEach(c => observer.observe(c));
+
+      // On resize, re-center active
+      let resizeTimer;
+      window.addEventListener('resize', ()=>{
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(()=> scrollToIndex(activeIndex, false), 120);
+      });
+
+      // Initial center
+      setTimeout(()=> scrollToIndex(0, false), 60);
+    })();
+  </script>
+</body>
+  </html>
