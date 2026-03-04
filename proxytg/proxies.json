@@ -1,0 +1,24 @@
+{
+  "proxies": [
+    {
+      "id": 1,
+      "name": "Proxy #1",
+      "url": "tg://proxy?server=example.com&port=443&secret=dd000000000000000000000000000000",
+      "server": "example.com",
+      "port": "443",
+      "secret": "dd000000000000000000000000000000",
+      "country": "🇺🇸",
+      "speed": "High"
+    },
+    {
+      "id": 2,
+      "name": "Proxy #2",
+      "url": "tg://proxy?server=proxy.example.org&port=80&secret=",
+      "server": "proxy.example.org",
+      "port": "80",
+      "secret": "",
+      "country": "🇩🇪",
+      "speed": "Medium"
+    }
+  ]
+}

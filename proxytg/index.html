@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Telegram Proxy</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="logo">
+                <svg class="logo-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM16.64 8.8C16.49 10.38 15.99 13.35 15.74 14.71C15.63 15.28 15.42 15.47 15.22 15.49C14.78 15.53 14.45 15.2 14.02 14.92C13.35 14.48 12.99 14.22 12.37 13.81C11.66 13.34 12.12 13.1 12.51 12.69C12.62 12.58 14.1 11.23 14.13 11.11C14.14 11.08 14.15 10.95 14.07 10.88C13.99 10.81 13.87 10.83 13.78 10.85C13.65 10.88 11.53 12.29 11.12 12.57C10.73 12.83 10.37 12.97 9.99 12.96C9.57 12.95 8.74 12.71 8.12 12.51C7.35 12.26 6.74 12.13 6.22 12.08C5.77 12.04 5.39 11.96 5.3 11.81C5.21 11.66 5.29 11.52 5.44 11.4C5.61 11.27 7.24 10.6 9.18 9.75C11.12 8.9 12.43 8.33 13.09 8.06C14.97 7.27 15.36 7.13 15.62 7.13C15.68 7.13 15.89 7.14 16.03 7.26C16.14 7.35 16.17 7.48 16.18 7.57C16.19 7.64 16.18 7.73 16.17 7.81C16.15 8.08 16.64 8.8 16.64 8.8Z" fill="currentColor"/>
+                </svg>
+                <h1>Telegram Proxy</h1>
+            </div>
+            <p class="subtitle">Бесплатные прокси для Telegram</p>
+        </header>
+
+        <main class="main">
+            <div class="stats">
+                <div class="stat-card">
+                    <span class="stat-value" id="proxy-count">0</span>
+                    <span class="stat-label">Прокси доступно</span>
+                </div>
+            </div>
+
+            <div class="search-box">
+                <input type="text" id="search" placeholder="Поиск прокси..." class="search-input">
+            </div>
+
+            <div class="proxy-list" id="proxy-list">
+                <!-- Прокси будут загружены здесь -->
+            </div>
+
+            <div class="empty-state" id="empty-state" style="display: none;">
+                <svg class="empty-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM13 17H11V15H13V17ZM13 13H11V7H13V13Z" fill="currentColor"/>
+                </svg>
+                <p>Прокси скоро появятся</p>
+                <span>Заходите позже</span>
+            </div>
+        </main>
+
+        <footer class="footer">
+            <p>&copy; 2026 Telegram Proxy. Все права защищены.</p>
+        </footer>
+    </div>
+
+    <!-- Модальное окно -->
+    <div class="modal" id="modal">
+        <div class="modal-overlay"></div>
+        <div class="modal-content">
+            <button class="modal-close" id="modal-close">&times;</button>
+            <h3 class="modal-title">Данные прокси</h3>
+            <div class="modal-body" id="modal-body">
+                <!-- Данные прокси -->
+            </div>
+            <div class="modal-actions">
+                <a href="#" class="btn btn-primary" id="connect-btn">
+                    <svg class="btn-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M19.0002 6.58594L12.0002 13.5859L8.0002 9.58594L6.5862 10.9999L12.0002 16.4139L21.8282 6.58594L19.0002 6.58594ZM4.0002 19.4139L7.4142 15.9999L6.0002 14.5859L2.5862 17.9999V19.4139H4.0002ZM2.5862 17.9999L4.0002 19.4139V17.9999H2.5862Z" fill="currentColor"/>
+                    </svg>
+                    Подключить
+                </a>
+                <button class="btn btn-secondary" id="copy-btn">
+                    <svg class="btn-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M16 1H4C2.9 1 2 1.9 2 3V17H4V3H16V1ZM19 5H8C6.9 5 6 5.9 6 7V21C6 22.1 6.9 23 8 23H19C20.1 23 21 22.1 21 21V7C21 5.9 20.1 5 19 5ZM19 21H8V7H19V21Z" fill="currentColor"/>
+                    </svg>
+                    Копировать
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Уведомление -->
+    <div class="toast" id="toast">
+        <span id="toast-message"></span>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
