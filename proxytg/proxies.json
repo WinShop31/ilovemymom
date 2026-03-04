@@ -3,22 +3,22 @@
     {
       "id": 1,
       "name": "Proxy #1",
-      "url": "tg://proxy?server=example.com&port=443&secret=dd000000000000000000000000000000",
-      "server": "example.com",
+      "url": "https://t.me/proxy?server=84.201.175.61&port=443&secret=eead24ce88888cf6231e908ca911628e",
+      "server": "84.201.175.61",
       "port": "443",
-      "secret": "dd000000000000000000000000000000",
-      "country": "🇺🇸",
-      "speed": "High"
+      "secret": "eead24ce88888cf6231e908ca911628e",
+      "country": "🇷🇺",
+      "speed": "Средняя"
     },
     {
       "id": 2,
       "name": "Proxy #2",
-      "url": "tg://proxy?server=proxy.example.org&port=80&secret=",
-      "server": "proxy.example.org",
-      "port": "80",
-      "secret": "",
-      "country": "🇩🇪",
-      "speed": "Medium"
+      "url": "https://t.me/proxy?server=37.139.34.162&port=443&secret=9f3c7a8d2e4b1c6f5a7d8e9b0c2f4a1d",
+      "server": "37.139.34.162",
+      "port": "443",
+      "secret": "9f3c7a8d2e4b1c6f5a7d8e9b0c2f4a1d",
+      "country": "🇷🇺",
+      "speed": "ВЫСОКАЯ🔥"
     }
   ]
 }
