@@ -324,7 +324,7 @@ function startRoomListener() {
     onValue(ref(db, 'public_rooms'), (snapshot) => {
         const rooms = snapshot.val() || {};
         renderRoomList(rooms);
-    });
+    }, { onlyOnce: false });
 }
 
 function renderRoomList(rooms) {
@@ -333,7 +333,7 @@ function renderRoomList(rooms) {
 
     const roomKeys = Object.keys(rooms);
     if (roomKeys.length === 0) {
-        container.innerHTML = '<div style="opacity: 0.5;">Нет активных комнат</div>';
+        container.innerHTML = '<div style="opacity: 0.5; padding: 15px;">Нет активных комнат</div>';
         return;
     }
 
@@ -351,12 +351,12 @@ function renderRoomList(rooms) {
             align-items: center;
         `;
         div.innerHTML = `
-            <div>
-                <div style="color: #e94560; font-weight: bold;">${code}</div>
+            <div style="text-align: left;">
+                <div style="color: #e94560; font-weight: bold; font-size: 16px;">${code}</div>
                 <div style="font-size: 12px; opacity: 0.6;">Хост: ${room.host || 'Unknown'}</div>
             </div>
             <button class="join-room-btn" data-code="${code}" style="
-                padding: 5px 15px;
+                padding: 8px 20px;
                 background: #0f9b58;
                 border: none;
                 border-radius: 5px;
@@ -735,6 +735,11 @@ function returnToLobby() {
     fpsLastCheck = performance.now();
 
     startRoomListener();
+
+    // Обновить список комнат сразу
+    get(ref(db, 'public_rooms')).then((snap) => {
+        renderRoomList(snap.val() || {});
+    });
 
     console.log('Вернулся в лобби');
 }
@@ -2040,6 +2045,7 @@ function startGame(roomCode) {
     setupControls();
 
     window.addEventListener('resize', () => {
+        if (!camera || !renderer) return;
         camera.aspect = window.innerWidth / window.innerHeight;
         camera.updateProjectionMatrix();
         renderer.setSize(window.innerWidth, window.innerHeight);
