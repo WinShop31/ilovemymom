@@ -29,19 +29,30 @@ import {
     get,
     onChildAdded
 } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
+import {
+    getAuth,
+    createUserWithEmailAndPassword,
+    signInWithEmailAndPassword,
+    signOut,
+    onAuthStateChanged
+} from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
 import * as THREE from 'three';
 import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js';
 
-let app, db;
+let app, db, auth;
 try {
     app = initializeApp(FIREBASE_CONFIG);
     db = getDatabase(app);
+    auth = getAuth(app);
     console.log('Firebase инициализирован');
 } catch (e) {
     console.error('Ошибка Firebase:', e);
     setStatus('❌ Ошибка Firebase. Проверь консоль.');
 }
+
+let currentUserId = null;
+let authReady = false;
 
 let scene, camera, renderer, controls;
 let moveForward = false, moveBackward = false, moveLeft = false, moveRight = false;
@@ -71,6 +82,7 @@ let playersListener = null;
 let pingRef = null;
 let lastPingSend = 0;
 let roomSeed = 0;
+let textureCache = {};
 let hpBarContainer = null;
 let hpBarOuter = null;
 let hpBarInner = null;
@@ -91,6 +103,113 @@ let muzzleFlash = null;
 let muzzleFlashLight = null;
 let hitParticles = [];
 
+let selectedCardId = null;
+let myCards = [];
+let inventoryOpen = false;
+let killsForCase = 0;
+let killsForCaseThreshold = 10;
+
+const CARD_DEFS = {
+    niviesino: {
+        id: 'niviesino',
+        name: 'Niviesino?',
+        rarity: 'common',
+        color: '#888888',
+        desc: 'Начальная карточка. Без эффектов.',
+        buffs: {}
+    },
+    gav: {
+        id: 'gav',
+        name: 'GAV',
+        rarity: 'rare',
+        color: '#4488ff',
+        desc: '+5 урон, +5 патроны, -10 HP',
+        buffs: { damageBonus: 5, ammoBonus: 5, hpBonus: -10 }
+    },
+    ziyn: {
+        id: 'ziyn',
+        name: 'Зiйн Зiйнович',
+        rarity: 'rare',
+        color: '#4488ff',
+        desc: '+5 прыжок, -3 скорость, +5 урон',
+        buffs: { jumpBonus: 5, speedBonus: -3, damageBonus: 5 }
+    },
+    fills: {
+        id: 'fills',
+        name: 'FILLS',
+        rarity: 'legendary',
+        color: '#ffaa00',
+        desc: '+10 урон, +50 патроны, -5 скорость, +11 HP',
+        buffs: { damageBonus: 10, ammoBonus: 50, speedBonus: -5, hpBonus: 11 }
+    }
+};
+
+async function loadCards() {
+    if (!currentUserId) return;
+
+    try {
+        const snap = await get(ref(db, 'users/' + currentUserId + '/cards'));
+        if (snap.exists()) {
+            myCards = snap.val();
+        }
+    } catch(e) {}
+
+    const hasNiviesino = myCards.some(c => c.cardId === 'niviesino');
+    if (!hasNiviesino) {
+        myCards.push({ cardId: 'niviesino', owned: true });
+    }
+
+    try {
+        const selSnap = await get(ref(db, 'users/' + currentUserId + '/selectedCard'));
+        selectedCardId = selSnap.exists() ? selSnap.val() : 'niviesino';
+    } catch(e) {
+        selectedCardId = 'niviesino';
+    }
+
+    try {
+        const caseSnap = await get(ref(db, 'users/' + currentUserId + '/cases'));
+        const caseCount = caseSnap.exists() ? caseSnap.val() : 0;
+        localStorage.setItem('fps_cases', String(caseCount));
+    } catch(e) {}
+}
+
+async function saveCards() {
+    if (!currentUserId) return;
+
+    await set(ref(db, 'users/' + currentUserId + '/cards'), myCards);
+    await set(ref(db, 'users/' + currentUserId + '/selectedCard'), selectedCardId);
+
+    const caseCount = parseInt(localStorage.getItem('fps_cases') || '0');
+    await set(ref(db, 'users/' + currentUserId + '/cases'), caseCount);
+}
+
+async function saveCaseCount() {
+    if (!currentUserId) return;
+    const caseCount = parseInt(localStorage.getItem('fps_cases') || '0');
+    await set(ref(db, 'users/' + currentUserId + '/cases'), caseCount);
+}
+
+function applyCardBuffs() {
+    const card = CARD_DEFS[selectedCardId] || CARD_DEFS['niviesino'];
+    const buffs = card.buffs || {};
+
+    myMaxHP = 100 + (buffs.hpBonus || 0);
+    myHP = myMaxHP;
+    myMaxAmmo = 15 + (buffs.ammoBonus || 0);
+    myAmmo = myMaxAmmo;
+    mySpeedMult = 1;
+    myDamageBonus = buffs.damageBonus || 0;
+    myFireRateMult = 1;
+    myJumpBonus = buffs.jumpBonus || 0;
+    mySpeedBonus = buffs.speedBonus || 0;
+}
+
+let mySpeedMult = 1;
+let myDamageBonus = 0;
+let myFireRateMult = 1;
+let myJumpBonus = 0;
+let mySpeedBonus = 0;
+
 function setStatus(msg) {
     document.getElementById('status-msg').innerHTML = msg;
 }
@@ -103,6 +222,189 @@ function generateRoomCode() {
     }
     return code;
 }
+
+function renderInventory() {
+    const caseCount = parseInt(localStorage.getItem('fps_cases') || '0');
+    document.getElementById('case-count').textContent = caseCount;
+    document.getElementById('kills-to-case').textContent = Math.max(0, killsForCaseThreshold - killsForCase);
+    document.getElementById('open-case-btn').disabled = caseCount <= 0;
+    document.getElementById('open-case-btn').style.opacity = caseCount <= 0 ? '0.5' : '1';
+
+    const container = document.getElementById('cards-container');
+    container.innerHTML = '';
+
+    for (const entry of myCards) {
+        const def = CARD_DEFS[entry.cardId];
+        if (!def) continue;
+
+        const isSelected = entry.cardId === selectedCardId;
+        const card = document.createElement('div');
+        card.style.cssText = `
+            background: rgba(255,255,255,0.05);
+            border: 2px ${isSelected ? 'solid' : 'dashed'} ${def.color};
+            border-radius: 10px;
+            padding: 15px;
+            cursor: pointer;
+            transition: all 0.2s;
+        `;
+        card.innerHTML = `
+            <div style="color: ${def.color}; font-weight: bold; font-size: 16px; margin-bottom: 5px;">${def.name}</div>
+            <div style="color: ${def.color}; font-size: 11px; margin-bottom: 8px;">${def.rarity.toUpperCase()}</div>
+            <div style="font-size: 12px; opacity: 0.7; line-height: 1.4;">${def.desc}</div>
+            ${isSelected ? '<div style="margin-top: 8px; color: #00ff00; font-size: 12px;">✓ Выбрана</div>' : ''}
+        `;
+        card.addEventListener('click', () => {
+            selectedCardId = entry.cardId;
+            saveCards();
+            updateCardDisplay();
+            renderInventory();
+        });
+        container.appendChild(card);
+    }
+}
+
+async function openCase() {
+    const caseCount = parseInt(localStorage.getItem('fps_cases') || '0');
+    if (caseCount <= 0) return;
+
+    localStorage.setItem('fps_cases', String(caseCount - 1));
+    await saveCaseCount();
+
+    const roll = Math.random();
+    let cardId;
+    if (roll < 0.05) cardId = 'fills';
+    else if (roll < 0.35) cardId = 'gav';
+    else cardId = 'ziyn';
+
+    const existing = myCards.find(c => c.cardId === cardId);
+    if (!existing) {
+        myCards.push({ cardId: cardId, owned: true });
+        await saveCards();
+    }
+
+    renderInventory();
+    updateCardDisplay();
+
+    const def = CARD_DEFS[cardId];
+    alert(`🎉 Выпала карточка: ${def.name} (${def.rarity})`);
+}
+
+function updateCardDisplay() {
+    const def = CARD_DEFS[selectedCardId] || CARD_DEFS['niviesino'];
+    document.getElementById('current-card-name').textContent = def.name;
+    document.getElementById('current-card-name').style.color = def.color;
+}
+
+function checkCaseReward() {
+    if (killsForCase >= killsForCaseThreshold) {
+        killsForCase = 0;
+        const caseCount = parseInt(localStorage.getItem('fps_cases') || '0');
+        localStorage.setItem('fps_cases', String(caseCount + 1));
+        if (currentUserId) {
+            set(ref(db, 'users/' + currentUserId + '/cases'), caseCount + 1);
+        }
+    }
+}
+
+async function authLogin(email, password) {
+    setStatus('<span class="loading"></span> Входим...');
+    try {
+        await signInWithEmailAndPassword(auth, email, password);
+    } catch(e) {
+        setStatus('❌ ' + (e.message || 'Ошибка входа'));
+    }
+}
+
+async function authRegister(email, password) {
+    setStatus('<span class="loading"></span> Регистрируем...');
+    try {
+        await createUserWithEmailAndPassword(auth, email, password);
+        setStatus('✅ Регистрация прошла успешно!');
+    } catch(e) {
+        setStatus('❌ ' + (e.message || 'Ошибка регистрации'));
+    }
+}
+
+async function authLogout() {
+    await signOut(auth);
+}
+
+onAuthStateChanged(auth, async (user) => {
+    if (user) {
+        currentUserId = user.uid;
+        authReady = true;
+        await loadCards();
+        updateCardDisplay();
+        document.getElementById('auth-section').innerHTML = `
+            <div style="color: #00ff00; font-size: 14px;">✓ ${user.email}</div>
+            <button id="logout-btn" style="
+                margin-top: 5px;
+                padding: 5px 15px;
+                background: #555;
+                border: none;
+                border-radius: 5px;
+                color: #fff;
+                cursor: pointer;
+                font-size: 12px;
+            ">Выйти</button>
+        `;
+        document.getElementById('logout-btn').addEventListener('click', authLogout);
+        document.getElementById('game-buttons').style.display = 'block';
+    } else {
+        currentUserId = null;
+        authReady = false;
+        myCards = [];
+        document.getElementById('auth-section').innerHTML = `
+            <div style="display: flex; flex-direction: column; gap: 8px; align-items: center;">
+                <input type="email" id="auth-email" placeholder="Email" style="
+                    padding: 8px 15px;
+                    border: 2px solid #e94560;
+                    border-radius: 8px;
+                    background: rgba(255,255,255,0.1);
+                    color: #fff;
+                    width: 250px;
+                ">
+                <input type="password" id="auth-pass" placeholder="Пароль" style="
+                    padding: 8px 15px;
+                    border: 2px solid #e94560;
+                    border-radius: 8px;
+                    background: rgba(255,255,255,0.1);
+                    color: #fff;
+                    width: 250px;
+                ">
+                <div style="display: flex; gap: 10px;">
+                    <button id="login-btn" style="
+                        padding: 8px 20px;
+                        background: #0f9b58;
+                        border: none;
+                        border-radius: 8px;
+                        color: #fff;
+                        cursor: pointer;
+                    ">Войти</button>
+                    <button id="register-btn" style="
+                        padding: 8px 20px;
+                        background: #e94560;
+                        border: none;
+                        border-radius: 8px;
+                        color: #fff;
+                        cursor: pointer;
+                    ">Регистрация</button>
+                </div>
+            </div>
+        `;
+        document.getElementById('login-btn').addEventListener('click', () => {
+            const email = document.getElementById('auth-email').value.trim();
+            const pass = document.getElementById('auth-pass').value;
+            if (email && pass) authLogin(email, pass);
+        });
+        document.getElementById('register-btn').addEventListener('click', () => {
+            const email = document.getElementById('auth-email').value.trim();
+            const pass = document.getElementById('auth-pass').value;
+            if (email && pass) authRegister(email, pass);
+        });
+        document.getElementById('game-buttons').style.display = 'none';
+    }
+});
 
 function createHPBar() {
     hpBarContainer = document.createElement('div');
@@ -382,6 +684,7 @@ function returnToLobby() {
     ping = 0;
     myAmmo = myMaxAmmo;
     isReloading = false;
+    killsForCase = 0;
     frameCount = 0;
     fps = 60;
     fpsLastCheck = performance.now();
@@ -389,10 +692,14 @@ function returnToLobby() {
     console.log('Вернулся в лобби');
 }
 
-function addCollider(mesh) {
-    const box = new THREE.Box3().setFromObject(mesh);
+function addCollider(objOrBounds) {
+    if (objOrBounds.min && objOrBounds.max) {
+        colliders.push(objOrBounds);
+        return;
+    }
+    const box = new THREE.Box3().setFromObject(objOrBounds);
     colliders.push({
-        mesh: mesh,
+        mesh: objOrBounds,
         min: box.min,
         max: box.max
     });
@@ -405,16 +712,32 @@ function checkCollision(position, radius) {
 
         const dx = position.x - closestX;
         const dz = position.z - closestZ;
-        const distance = Math.sqrt(dx * dx + dz * dz);
+        const distXZ = Math.sqrt(dx * dx + dz * dz);
 
-        if (distance < radius) {
+        if (distXZ < radius) {
             return {
                 collider: collider,
-                overlap: radius - distance,
+                overlap: radius - distXZ,
                 dx: dx,
                 dz: dz,
-                distance: distance
+                distance: distXZ
             };
+        }
+    }
+    return null;
+}
+
+function checkStandingOn(position, radius) {
+    for (const collider of colliders) {
+        const closestX = Math.max(collider.min.x, Math.min(position.x, collider.max.x));
+        const closestZ = Math.max(collider.min.z, Math.min(position.z, collider.max.z));
+
+        const dx = position.x - closestX;
+        const dz = position.z - closestZ;
+        const distXZ = Math.sqrt(dx * dx + dz * dz);
+
+        if (distXZ < radius && position.y >= collider.max.y - 0.3 && position.y <= collider.max.y + 1) {
+            return collider.max.y;
         }
     }
     return null;
@@ -428,6 +751,24 @@ function resolveCollision(position, radius) {
         position.x += nx * collision.overlap;
         position.z += nz * collision.overlap;
         return true;
+    }
+    return false;
+}
+
+function checkBulletCollider(position, radius) {
+    for (const collider of colliders) {
+        const closestX = Math.max(collider.min.x, Math.min(position.x, collider.max.x));
+        const closestY = Math.max(collider.min.y, Math.min(position.y, collider.max.y));
+        const closestZ = Math.max(collider.min.z, Math.min(position.z, collider.max.z));
+
+        const dx = position.x - closestX;
+        const dy = position.y - closestY;
+        const dz = position.z - closestZ;
+        const distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
+
+        if (distance < radius) {
+            return true;
+        }
     }
     return false;
 }
@@ -457,6 +798,11 @@ async function createRoom() {
         return;
     }
 
+    if (!currentUserId) {
+        setStatus('❌ Войди в аккаунт чтобы играть!');
+        return;
+    }
+    
     const nickInput = document.getElementById('nickname-input');
     if (nickInput) {
         const nick = nickInput.value.trim();
@@ -910,6 +1256,7 @@ function initScene() {
     scene = new THREE.Scene();
     scene.background = new THREE.Color(0x87ceeb);
     scene.fog = new THREE.FogExp2(0x87ceeb, 0.015);
+    scene.background = new THREE.Color(0x87ceeb);
 
     camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
     camera.position.set(0, playerHeight, 0);
@@ -1034,6 +1381,168 @@ function updateAmmoDisplay() {
     }
 }
 
+function generateTexture(type, size) {
+    if (textureCache[type + size]) return textureCache[type + size];
+    
+    const canvas = document.createElement('canvas');
+    canvas.width = size;
+    canvas.height = size;
+    const ctx = canvas.getContext('2d');
+    
+    switch(type) {
+        case 'concrete':
+            ctx.fillStyle = '#666677';
+            ctx.fillRect(0, 0, size, size);
+            for (let i = 0; i < 200; i++) {
+                const x = Math.random() * size;
+                const y = Math.random() * size;
+                const shade = Math.random() * 40 - 20;
+                ctx.fillStyle = `rgba(${102+shade},${102+shade},${119+shade},0.3)`;
+                ctx.fillRect(x, y, 2 + Math.random() * 3, 2 + Math.random() * 3);
+            }
+            ctx.strokeStyle = 'rgba(50,50,60,0.3)';
+            ctx.lineWidth = 1;
+            for (let i = 0; i < 5; i++) {
+                ctx.beginPath();
+                ctx.moveTo(Math.random() * size, Math.random() * size);
+                ctx.lineTo(Math.random() * size, Math.random() * size);
+                ctx.stroke();
+            }
+            break;
+            
+        case 'concrete_wall':
+            ctx.fillStyle = '#777788';
+            ctx.fillRect(0, 0, size, size);
+            for (let i = 0; i < 150; i++) {
+                const x = Math.random() * size;
+                const y = Math.random() * size;
+                const shade = Math.random() * 30 - 15;
+                ctx.fillStyle = `rgba(${119+shade},${119+shade},${136+shade},0.3)`;
+                ctx.fillRect(x, y, 2, 2);
+            }
+            ctx.fillStyle = 'rgba(60,60,70,0.2)';
+            for (let y = 0; y < size; y += size / 4) {
+                ctx.fillRect(0, y, size, 2);
+            }
+            break;
+            
+        case 'wood':
+            ctx.fillStyle = '#8B6914';
+            ctx.fillRect(0, 0, size, size);
+            for (let y = 0; y < size; y += 4) {
+                const shade = Math.random() * 20 - 10;
+                ctx.fillStyle = `rgb(${139+shade},${105+shade},${20+shade})`;
+                ctx.fillRect(0, y, size, 3);
+                ctx.fillStyle = 'rgba(60,40,10,0.3)';
+                ctx.fillRect(0, y + 3, size, 1);
+            }
+            for (let i = 0; i < 3; i++) {
+                const x = Math.random() * size;
+                ctx.strokeStyle = 'rgba(40,25,5,0.5)';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x + (Math.random() - 0.5) * 20, size);
+                ctx.stroke();
+            }
+            break;
+            
+        case 'metal':
+            ctx.fillStyle = '#556677';
+            ctx.fillRect(0, 0, size, size);
+            for (let i = 0; i < 100; i++) {
+                const x = Math.random() * size;
+                const y = Math.random() * size;
+                ctx.fillStyle = `rgba(${85+Math.random()*30},${102+Math.random()*30},${119+Math.random()*30},0.3)`;
+                ctx.fillRect(x, y, 3, 3);
+            }
+            ctx.strokeStyle = 'rgba(40,50,60,0.3)';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(5, 5, size - 10, size - 10);
+            break;
+            
+        case 'rusty_metal':
+            ctx.fillStyle = '#774433';
+            ctx.fillRect(0, 0, size, size);
+            for (let i = 0; i < 80; i++) {
+                const x = Math.random() * size;
+                const y = Math.random() * size;
+                ctx.fillStyle = `rgba(${119+Math.random()*40},${68+Math.random()*30},${51+Math.random()*20},0.4)`;
+                ctx.fillRect(x, y, 4, 4);
+            }
+            for (let i = 0; i < 30; i++) {
+                const x = Math.random() * size;
+                const y = Math.random() * size;
+                ctx.fillStyle = `rgba(${180+Math.random()*40},${80+Math.random()*40},${40+Math.random()*20},0.5)`;
+                ctx.fillRect(x, y, 3, 3);
+            }
+            break;
+            
+        case 'floor_tile':
+            ctx.fillStyle = '#444455';
+            ctx.fillRect(0, 0, size, size);
+            const tileSize = size / 4;
+            for (let tx = 0; tx < size; tx += tileSize) {
+                for (let ty = 0; ty < size; ty += tileSize) {
+                    const shade = Math.random() * 15 - 7;
+                    ctx.fillStyle = `rgb(${68+shade},${68+shade},${85+shade})`;
+                    ctx.fillRect(tx + 1, ty + 1, tileSize - 2, tileSize - 2);
+                }
+            }
+            ctx.strokeStyle = 'rgba(30,30,40,0.5)';
+            ctx.lineWidth = 2;
+            for (let i = 0; i <= 4; i++) {
+                ctx.beginPath();
+                ctx.moveTo(i * tileSize, 0);
+                ctx.lineTo(i * tileSize, size);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.moveTo(0, i * tileSize);
+                ctx.lineTo(size, i * tileSize);
+                ctx.stroke();
+            }
+            break;
+            
+        case 'sandbag':
+            ctx.fillStyle = '#998866';
+            ctx.fillRect(0, 0, size, size);
+            for (let y = 0; y < size; y += 12) {
+                for (let x = 0; x < size; x += 20) {
+                    const offset = (Math.floor(y / 12) % 2) * 10;
+                    ctx.fillStyle = `rgb(${153+Math.random()*20},${136+Math.random()*15},${102+Math.random()*15})`;
+                    ctx.fillRect(x + offset + 1, y + 1, 18, 10);
+                    ctx.strokeStyle = 'rgba(60,50,30,0.4)';
+                    ctx.lineWidth = 1;
+                    ctx.strokeRect(x + offset + 1, y + 1, 18, 10);
+                }
+            }
+            break;
+    }
+    
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.wrapS = THREE.RepeatWrapping;
+    texture.wrapT = THREE.RepeatWrapping;
+    textureCache[type + size] = texture;
+    return texture;
+}
+
+function createTexturedBox(x, y, z, w, h, d, textureType) {
+    const texture = generateTexture(textureType, 256);
+    const material = new THREE.MeshStandardMaterial({
+        map: texture,
+        roughness: 0.8,
+        metalness: textureType === 'metal' || textureType === 'rusty_metal' ? 0.5 : 0.1
+    });
+    const geometry = new THREE.BoxGeometry(w, h, d);
+    const mesh = new THREE.Mesh(geometry, material);
+    mesh.position.set(x, y, z);
+    mesh.castShadow = true;
+    mesh.receiveShadow = true;
+    mesh.frustumCulled = true;
+    scene.add(mesh);
+    return mesh;
+}
+
 function seededRandom(seed) {
     let s = seed;
     return function() {
@@ -1046,12 +1555,17 @@ function generateMap(seed) {
     const rng = seededRandom(seed);
     colliders = [];
 
+    generateRandomMap(rng);
+}
+
+function generateRandomMap(rng) {
     const floorGeometry = new THREE.PlaneGeometry(100, 100);
     const floorMaterial = new THREE.MeshStandardMaterial({
-        color: 0x3a3a4a,
+        map: generateTexture('floor_tile', 512),
         roughness: 0.7,
         metalness: 0.3
     });
+    floorMaterial.map.repeat.set(10, 10);
     const floor = new THREE.Mesh(floorGeometry, floorMaterial);
     floor.rotation.x = -Math.PI / 2;
     floor.receiveShadow = true;
@@ -1060,7 +1574,7 @@ function generateMap(seed) {
     const gridHelper = new THREE.GridHelper(100, 50, 0x555566, 0x444455);
     scene.add(gridHelper);
 
-    const wallMat = new THREE.MeshStandardMaterial({ color: 0x666680, roughness: 0.5, metalness: 0.4 });
+    const wallMat = new THREE.MeshStandardMaterial({ map: generateTexture('concrete_wall', 256), roughness: 0.5, metalness: 0.4 });
     const wall1 = createBox(0, 2.5, -50, 100, 5, 1, wallMat);
     const wall2 = createBox(0, 2.5, 50, 100, 5, 1, wallMat);
     const wall3 = createBox(-50, 2.5, 0, 1, 5, 100, wallMat);
@@ -1080,7 +1594,7 @@ function generateMap(seed) {
         if (Math.abs(x) < 5 && Math.abs(z) < 5) continue;
 
         const w = 1 + rng() * 4;
-        const h = 1 + rng() * 4;
+        const h = 2 + rng() * 4;
         const d = 1 + rng() * 4;
         const color = boxColors[Math.floor(rng() * boxColors.length)];
 
@@ -1139,7 +1653,7 @@ function generateMap(seed) {
         const z = (rng() - 0.5) * 60;
         const w = 3 + rng() * 5;
         const d = 3 + rng() * 5;
-        const plat = createBox(x, 0.4, z, w, 0.8, d, 0x555566);
+        const plat = createBox(x, 1.5, z, w, 3, d, 0x555566);
         plat.frustumCulled = true;
         addCollider(plat);
     }
@@ -1181,7 +1695,7 @@ function setupControls() {
             case 'KeyD': moveRight = true; break;
             case 'Space':
                 if (canJump && !isDead) {
-                    velocity.y += 10;
+                    velocity.y += 10 + myJumpBonus;
                     canJump = false;
                 }
                 break;
@@ -1254,7 +1768,7 @@ function animate() {
         direction.x = Number(moveRight) - Number(moveLeft);
         direction.normalize();
 
-        const speed = 100.0;
+        const speed = 100.0 + mySpeedBonus;
         if (moveForward || moveBackward) velocity.z -= direction.z * speed * delta;
         if (moveLeft || moveRight) velocity.x -= direction.x * speed * delta;
 
@@ -1324,7 +1838,7 @@ function animate() {
 
         bullet.position.add(bullet.userData.velocity.clone().multiplyScalar(delta));
 
-        if (checkCollision(bullet.position, 0.1)) {
+        if (checkBulletCollider(bullet.position, 0.1)) {
             spawnHitParticles(bullet.position, 0x888888);
             scene.remove(bullet);
             bullet.geometry.dispose();
@@ -1346,7 +1860,7 @@ function animate() {
                 set(hitRef, {
                     targetId: hitPlayerId,
                     shooterId: myId,
-                    damage: 15,
+                    damage: 15 + myDamageBonus,
                     timestamp: Date.now()
                 });
                 setTimeout(() => remove(hitRef), 1000);
@@ -1372,6 +1886,8 @@ function animate() {
             const death = snapshot.val();
             if (death.shooterId === myId) {
                 killCount++;
+                killsForCase++;
+                checkCaseReward();
                 updateHPBar();
             }
             setTimeout(() => remove(snapshot.ref), 2000);
@@ -1454,6 +1970,8 @@ function startGame(roomCode) {
     document.getElementById('room-info').textContent = 'Комната: ' + roomCode + ' | Поделись кодом!';
     document.getElementById('lobby-btn').classList.add('active');
 
+    applyCardBuffs();
+
     initScene();
     setupControls();
 
@@ -1483,6 +2001,20 @@ function init() {
         const code = document.getElementById('room-code-input').value;
         joinRoom(code);
     });
+
+    document.getElementById('inventory-btn').addEventListener('click', () => {
+        document.getElementById('inventory-modal').style.display = 'flex';
+        renderInventory();
+    });
+
+    document.getElementById('close-inventory-btn').addEventListener('click', () => {
+        document.getElementById('inventory-modal').style.display = 'none';
+    });
+
+    document.getElementById('open-case-btn').addEventListener('click', openCase);
+
+    loadCards();
+    updateCardDisplay();
 }
 
 init();

@@ -337,11 +337,33 @@
         <p>Онлайн 3D шутер — играй с людьми со всего мира!</p>
 
         <div class="menu-section">
+            <h3>Аккаунт</h3>
+            <div id="auth-section"></div>
+        </div>
+
+        <div id="game-buttons" class="menu-section">
+            <button id="inventory-btn" style="
+                padding: 10px 30px;
+                font-size: 16px;
+                background: #0f9b58;
+                border: none;
+                border-radius: 8px;
+                color: #fff;
+                cursor: pointer;
+            ">🎴 Инвентарь</button>
+            <div id="selected-card-display" style="
+                margin-top: 10px;
+                font-size: 14px;
+                opacity: 0.8;
+            ">Выбрана: <span id="current-card-name">Niviesino?</span></div>
+        </div>
+
+        <div id="game-buttons" class="menu-section">
             <h3>Твой ник</h3>
             <input type="text" id="nickname-input" placeholder="Введи ник" maxlength="15">
         </div>
 
-        <div class="menu-section">
+        <div id="game-buttons" class="menu-section">
             <h3>Создать комнату</h3>
             <button id="create-room-btn">➕ Создать комнату</button>
         </div>
@@ -367,6 +389,59 @@
 
     <div id="blocker" class="hidden">
         <div>Нажмите, чтобы продолжить</div>
+    </div>
+
+    <div id="inventory-modal" style="
+        display: none;
+        position: fixed;
+        top: 0; left: 0;
+        width: 100%; height: 100%;
+        background: rgba(0,0,0,0.85);
+        z-index: 500;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+    ">
+        <div style="
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            padding: 30px;
+            border-radius: 15px;
+            max-width: 700px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            text-align: center;
+            color: #fff;
+        ">
+            <h2 style="color: #e94560; margin-bottom: 10px;">🎴 Инвентарь</h2>
+            <p style="opacity: 0.7; margin-bottom: 20px;">Кейсы: <span id="case-count">0</span> | Убийств до кейса: <span id="kills-to-case">10</span></p>
+            <button id="open-case-btn" style="
+                padding: 10px 25px;
+                background: #e94560;
+                border: none;
+                border-radius: 8px;
+                color: #fff;
+                font-size: 16px;
+                cursor: pointer;
+                margin-bottom: 20px;
+            ">📦 Открыть кейс</button>
+            <div id="cards-container" style="
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+                gap: 15px;
+                margin-top: 15px;
+            "></div>
+            <button id="close-inventory-btn" style="
+                margin-top: 20px;
+                padding: 10px 30px;
+                background: #555;
+                border: none;
+                border-radius: 8px;
+                color: #fff;
+                font-size: 16px;
+                cursor: pointer;
+            ">Закрыть</button>
+        </div>
     </div>
 
     <script type="importmap">
