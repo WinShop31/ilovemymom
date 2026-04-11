@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FPS Shooter - Онлайн</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            overflow: hidden;
+            font-family: Arial, sans-serif;
+            background: #000;
+        }
+
+        #mobile-warning {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #fff;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 20px;
+            z-index: 1000;
+        }
+
+        #mobile-warning.active {
+            display: flex;
+        }
+
+        #mobile-warning h1 {
+            font-size: 2em;
+            margin-bottom: 20px;
+            color: #e94560;
+        }
+
+        #mobile-warning p {
+            font-size: 1.2em;
+            line-height: 1.6;
+        }
+
+        #game-container {
+            display: none;
+        }
+
+        #game-container.active {
+            display: block;
+        }
+
+        #crosshair {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 20px;
+            height: 20px;
+            pointer-events: none;
+            z-index: 100;
+        }
+
+        #crosshair::before,
+        #crosshair::after {
+            content: '';
+            position: absolute;
+            background: #fff;
+        }
+
+        #crosshair::before {
+            width: 2px;
+            height: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        #crosshair::after {
+            width: 20px;
+            height: 2px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        #hud {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            color: #fff;
+            font-size: 18px;
+            z-index: 100;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+        }
+
+        #hud .room-info {
+            margin-bottom: 5px;
+            opacity: 0.8;
+            font-size: 14px;
+        }
+
+        #menu {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 200;
+            color: #fff;
+        }
+
+        #menu.hidden {
+            display: none;
+        }
+
+        #menu h1 {
+            font-size: 3em;
+            margin-bottom: 10px;
+            color: #e94560;
+            text-shadow: 0 0 20px rgba(233, 69, 96, 0.5);
+        }
+
+        #menu > p {
+            margin-bottom: 30px;
+            opacity: 0.8;
+        }
+
+        .menu-section {
+            margin: 10px 0;
+            text-align: center;
+        }
+
+        .menu-section h3 {
+            color: #e94560;
+            margin-bottom: 10px;
+        }
+
+        #room-list {
+            max-height: 200px;
+            overflow-y: auto;
+            margin: 15px 0;
+            min-width: 300px;
+        }
+
+        .room-item {
+            padding: 10px 20px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 8px;
+            margin: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .room-item button {
+            padding: 5px 15px;
+            background: #e94560;
+            border: none;
+            border-radius: 5px;
+            color: #fff;
+            cursor: pointer;
+        }
+
+        .room-item button:hover {
+            background: #ff6b81;
+        }
+
+        #create-room-btn {
+            padding: 12px 40px;
+            font-size: 18px;
+            background: #e94560;
+            border: none;
+            border-radius: 8px;
+            color: #fff;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin: 10px;
+        }
+
+        #create-room-btn:hover {
+            background: #ff6b81;
+            transform: scale(1.05);
+        }
+
+        #join-form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            align-items: center;
+            margin-top: 15px;
+        }
+
+        #join-form input {
+            padding: 12px 20px;
+            font-size: 16px;
+            border: 2px solid #e94560;
+            border-radius: 8px;
+            background: rgba(255,255,255,0.1);
+            color: #fff;
+            width: 300px;
+            text-align: center;
+        }
+
+        #join-form input::placeholder {
+            color: rgba(255,255,255,0.5);
+        }
+
+        #join-form button {
+            padding: 12px 40px;
+            font-size: 18px;
+            background: #0f9b58;
+            border: none;
+            border-radius: 8px;
+            color: #fff;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        #join-form button:hover {
+            background: #12b865;
+            transform: scale(1.05);
+        }
+
+        #instructions {
+            margin-top: 30px;
+            text-align: center;
+            opacity: 0.7;
+        }
+
+        #instructions h3 {
+            margin-bottom: 10px;
+            color: #e94560;
+        }
+
+        #instructions p {
+            margin: 5px 0;
+        }
+
+        #blocker {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 150;
+            color: #fff;
+            font-size: 24px;
+            cursor: pointer;
+        }
+
+        #blocker.hidden {
+            display: none;
+        }
+
+        #status-msg {
+            margin-top: 15px;
+            font-size: 14px;
+            opacity: 0.8;
+            min-height: 20px;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div id="mobile-warning">
+        <div>
+            <h1>🎮 Игра пока не доступна на мобильных</h1>
+            <p>Мы работаем над мобильной версией!<br>Пожалуйста, зайдите с компьютера, чтобы играть.</p>
+        </div>
+    </div>
+
+    <div id="game-container">
+        <div id="crosshair"></div>
+        <div id="hud">
+            <div class="room-info" id="room-info">Комната: ...</div>
+            <div>Игроки: <span id="player-count">1</span></div>
+        </div>
+    </div>
+
+    <div id="menu">
+        <h1>🔫 FPS SHOOTER</h1>
+        <p>Онлайн 3D шутер — играй с людьми со всего мира!</p>
+
+        <div class="menu-section">
+            <h3>Создать комнату</h3>
+            <button id="create-room-btn">➕ Создать комнату</button>
+        </div>
+
+        <div class="menu-section">
+            <h3>Или присоединиться по коду</h3>
+            <form id="join-form">
+                <input type="text" id="room-code-input" placeholder="Введи код комнаты">
+                <button type="submit">🚀 Войти</button>
+            </form>
+        </div>
+
+        <div id="status-msg"></div>
+
+        <div id="instructions">
+            <h3>Управление:</h3>
+            <p><strong>WASD</strong> — движение</p>
+            <p><strong>Пробел</strong> — прыжок</p>
+            <p><strong>Мышь</strong> — обзор</p>
+            <p><strong>ЛКМ</strong> — стрельба</p>
+        </div>
+    </div>
+
+    <div id="blocker" class="hidden">
+        <div>Нажмите, чтобы продолжить</div>
+    </div>
+
+    <script type="module" src="game.js"></script>
+</body>
+</html>
