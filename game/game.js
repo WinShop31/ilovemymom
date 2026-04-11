@@ -723,6 +723,9 @@ function returnToLobby() {
     scene = null;
     renderer = null;
 
+    // Очищаем кеш текстур чтобы не багажили при перезаходе
+    textureCache = {};
+
     myRoomId = null;
     killCount = 0;
     deathCount = 0;
@@ -1201,7 +1204,7 @@ function spawnRemoteBullet(position, direction) {
 }
 
 function createRemotePlayer(playerId, nickname) {
-    if (!scene) return;
+    if (!scene || !document.body) return;
 
     const group = new THREE.Group();
 
