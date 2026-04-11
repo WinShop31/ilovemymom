@@ -658,8 +658,7 @@ function returnToLobby() {
     }
 
     if (myRoomId) {
-        remove(ref(db, 'public_rooms/' + myRoomId));
-
+        // Удаляем комнату только если мы последний игрок
         const roomRef = ref(db, 'rooms/' + myRoomId);
         get(roomRef).then((snap) => {
             if (snap.exists()) {
@@ -667,6 +666,7 @@ function returnToLobby() {
                 const playerCount = roomData.players ? Object.keys(roomData.players).length : 0;
                 if (playerCount <= 1) {
                     remove(roomRef);
+                    remove(ref(db, 'public_rooms/' + myRoomId));
                 }
             }
         });
