@@ -1201,6 +1201,8 @@ function spawnRemoteBullet(position, direction) {
 }
 
 function createRemotePlayer(playerId, nickname) {
+    if (!scene) return;
+
     const group = new THREE.Group();
 
     const bodyGeometry = new THREE.CapsuleGeometry(0.3, 1, 4, 8);
