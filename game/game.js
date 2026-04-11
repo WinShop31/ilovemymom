@@ -76,6 +76,13 @@ let hpBarOuter = null;
 let hpBarInner = null;
 let hpText = null;
 let killDeathDisplay = null;
+let pingDisplay = null;
+let ammoDisplay = null;
+
+let myAmmo = 30;
+let myMaxAmmo = 30;
+let isReloading = false;
+let weaponModel = null;
 
 function setStatus(msg) {
     document.getElementById('status-msg').innerHTML = msg;
@@ -252,7 +259,10 @@ function die(killerId) {
 function respawn() {
     isDead = false;
     myHP = myMaxHP;
+    myAmmo = myMaxAmmo;
+    isReloading = false;
     updateHPBar();
+    updateAmmoDisplay();
 
     const spawnX = (Math.random() - 0.5) * 40;
     const spawnZ = (Math.random() - 0.5) * 40;
@@ -332,6 +342,11 @@ function returnToLobby() {
         hpBarContainer = null;
     }
 
+    if (ammoDisplay && ammoDisplay.parentNode) {
+        ammoDisplay.parentNode.removeChild(ammoDisplay);
+        ammoDisplay = null;
+    }
+
     const floatingEls = document.querySelectorAll('div[style*="position: fixed"]');
     floatingEls.forEach(el => {
         if (el.style.zIndex === '99') {
@@ -358,6 +373,8 @@ function returnToLobby() {
     killCount = 0;
     deathCount = 0;
     ping = 0;
+    myAmmo = myMaxAmmo;
+    isReloading = false;
     frameCount = 0;
     fps = 60;
     fpsLastCheck = performance.now();
@@ -648,12 +665,25 @@ function broadcastState() {
 }
 
 function shoot() {
-    if (isDead || !controls.isLocked) return;
+    if (isDead || !controls.isLocked || isReloading) return;
+
+    if (myAmmo <= 0) {
+        reload();
+        return;
+    }
+
+    myAmmo--;
+    updateAmmoDisplay();
 
     const direction = new THREE.Vector3();
     camera.getWorldDirection(direction);
 
     spawnLocalBullet(camera.position.clone(), direction.clone());
+
+    if (weaponModel) {
+        weaponModel.position.z += 0.1;
+        weaponModel.rotation.x -= 0.1;
+    }
 
     if (myRoomId) {
         const bulletRef = push(ref(db, 'rooms/' + myRoomId + '/bullets'));
@@ -668,6 +698,18 @@ function shoot() {
             remove(bulletRef);
         }, 3000);
     }
+}
+
+function reload() {
+    if (isReloading || myAmmo === myMaxAmmo) return;
+    isReloading = true;
+    updateAmmoDisplay();
+
+    setTimeout(() => {
+        myAmmo = myMaxAmmo;
+        isReloading = false;
+        updateAmmoDisplay();
+    }, 1500);
 }
 
 function spawnLocalBullet(position, direction) {
@@ -703,12 +745,6 @@ function createRemotePlayer(playerId, nickname) {
     body.position.y = 0.8;
     body.castShadow = true;
     group.add(body);
-
-    const gunGeometry = new THREE.BoxGeometry(0.1, 0.1, 0.5);
-    const gunMaterial = new THREE.MeshStandardMaterial({ color: 0x333333, roughness: 0.3, metalness: 0.7 });
-    const gun = new THREE.Mesh(gunGeometry, gunMaterial);
-    gun.position.set(0.3, 0.5, -0.3);
-    group.add(gun);
 
     const hpBarBg = document.createElement('div');
     hpBarBg.style.cssText = `
@@ -865,6 +901,67 @@ function initScene() {
 
     createHPBar();
     updateHPBar();
+    createWeaponModel();
+}
+
+function createWeaponModel() {
+    weaponModel = new THREE.Group();
+
+    const gunBody = new THREE.Mesh(
+        new THREE.BoxGeometry(0.08, 0.12, 0.5),
+        new THREE.MeshStandardMaterial({ color: 0x222222, roughness: 0.3, metalness: 0.8 })
+    );
+    gunBody.position.set(0, 0, -0.25);
+    weaponModel.add(gunBody);
+
+    const barrel = new THREE.Mesh(
+        new THREE.BoxGeometry(0.04, 0.04, 0.3),
+        new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.2, metalness: 0.9 })
+    );
+    barrel.position.set(0, 0.02, -0.6);
+    weaponModel.add(barrel);
+
+    const grip = new THREE.Mesh(
+        new THREE.BoxGeometry(0.06, 0.15, 0.08),
+        new THREE.MeshStandardMaterial({ color: 0x3a2a1a, roughness: 0.7, metalness: 0.1 })
+    );
+    grip.position.set(0, -0.12, -0.1);
+    grip.rotation.x = 0.3;
+    weaponModel.add(grip);
+
+    weaponModel.position.set(0.3, -0.28, -0.5);
+    camera.add(weaponModel);
+    scene.add(camera);
+
+    createAmmoDisplay();
+}
+
+function createAmmoDisplay() {
+    ammoDisplay = document.createElement('div');
+    ammoDisplay.style.cssText = `
+        position: fixed;
+        bottom: 20px;
+        right: 30px;
+        color: #fff;
+        font-size: 36px;
+        font-weight: bold;
+        font-family: 'Courier New', monospace;
+        text-shadow: 2px 2px 6px rgba(0,0,0,0.8);
+        z-index: 100;
+    `;
+    document.body.appendChild(ammoDisplay);
+    updateAmmoDisplay();
+}
+
+function updateAmmoDisplay() {
+    if (!ammoDisplay) return;
+    if (isReloading) {
+        ammoDisplay.textContent = 'ПЕРЕЗАРЯДКА...';
+        ammoDisplay.style.color = '#ffaa00';
+    } else {
+        ammoDisplay.textContent = myAmmo + ' / ∞';
+        ammoDisplay.style.color = myAmmo > 10 ? '#fff' : '#ff4444';
+    }
 }
 
 function seededRandom(seed) {
@@ -972,6 +1069,9 @@ function setupControls() {
                     canJump = false;
                 }
                 break;
+            case 'KeyR':
+                reload();
+                break;
         }
     });
 
@@ -1063,6 +1163,15 @@ function animate() {
         if (time - lastBroadcast > 100) {
             broadcastState();
             lastBroadcast = time;
+        }
+    }
+
+    if (weaponModel) {
+        weaponModel.position.z = THREE.MathUtils.lerp(weaponModel.position.z, -0.5, 0.15);
+        weaponModel.rotation.x = THREE.MathUtils.lerp(weaponModel.rotation.x, 0, 0.15);
+
+        if (!isDead) {
+            weaponModel.position.y = -0.28 + Math.sin(time * 0.008) * 0.005;
         }
     }
 
