@@ -79,10 +79,14 @@ let killDeathDisplay = null;
 let pingDisplay = null;
 let ammoDisplay = null;
 
-let myAmmo = 30;
-let myMaxAmmo = 30;
+let myAmmo = 15;
+let myMaxAmmo = 15;
 let isReloading = false;
 let weaponModel = null;
+let isFiring = false;
+let fireRate = 65;
+let lastFireTime = 0;
+let lastHealTime = 0;
 
 function setStatus(msg) {
     document.getElementById('status-msg').innerHTML = msg;
@@ -665,13 +669,16 @@ function broadcastState() {
 }
 
 function shoot() {
+    const now = Date.now();
     if (isDead || !controls.isLocked || isReloading) return;
+    if (now - lastFireTime < fireRate) return;
 
     if (myAmmo <= 0) {
         reload();
         return;
     }
 
+    lastFireTime = now;
     myAmmo--;
     updateAmmoDisplay();
 
@@ -1086,7 +1093,13 @@ function setupControls() {
 
     document.addEventListener('mousedown', (event) => {
         if (event.button === 0 && controls.isLocked && !isDead) {
-            shoot();
+            isFiring = true;
+        }
+    });
+
+    document.addEventListener('mouseup', (event) => {
+        if (event.button === 0) {
+            isFiring = false;
         }
     });
 
@@ -1175,6 +1188,17 @@ function animate() {
         }
     }
 
+    if (isFiring && controls.isLocked && !isDead) {
+        shoot();
+    }
+
+    const now = Date.now();
+    if (!isDead && now - lastHealTime > 5000 && myHP < myMaxHP) {
+        lastHealTime = now;
+        myHP = Math.min(myHP + 1, myMaxHP);
+        updateHPBar();
+    }
+
     interpolatePlayers(delta);
 
     for (let i = bullets.length - 1; i >= 0; i--) {
@@ -1211,7 +1235,7 @@ function animate() {
                 set(hitRef, {
                     targetId: hitPlayerId,
                     shooterId: myId,
-                    damage: 25,
+                    damage: 15,
                     timestamp: Date.now()
                 });
                 setTimeout(() => remove(hitRef), 1000);
