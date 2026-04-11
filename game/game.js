@@ -103,11 +103,153 @@ let muzzleFlash = null;
 let muzzleFlashLight = null;
 let hitParticles = [];
 
+let audioCtx = null;
+let masterVolume = 0.5;
+let mouseSensitivity = 1.0;
+
+function loadSettings() {
+    const savedVol = localStorage.getItem('fps_volume');
+    if (savedVol !== null) masterVolume = parseFloat(savedVol);
+
+    const savedSens = localStorage.getItem('fps_sens');
+    if (savedSens !== null) mouseSensitivity = parseFloat(savedSens);
+
+    const volSlider = document.getElementById('volume-slider');
+    if (volSlider) {
+        volSlider.value = Math.round(masterVolume * 100);
+        document.getElementById('volume-value').textContent = Math.round(masterVolume * 100);
+    }
+
+    const sensSlider = document.getElementById('sens-slider');
+    if (sensSlider) {
+        sensSlider.value = Math.round(mouseSensitivity * 10);
+        document.getElementById('sens-value').textContent = mouseSensitivity.toFixed(1);
+    }
+}
+
+function saveSettings() {
+    localStorage.setItem('fps_volume', String(masterVolume));
+    localStorage.setItem('fps_sens', String(mouseSensitivity));
+}
+
+function initAudio() {
+    if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+}
+
+function playShootSound() {
+    if (!audioCtx) return;
+
+    const now = audioCtx.currentTime;
+
+
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(150, now);
+    osc.frequency.exponentialRampToValueAtTime(40, now + 0.08);
+    gain.gain.setValueAtTime(0.4 * masterVolume, now);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.12);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start(now);
+    osc.stop(now + 0.15);
+
+
+    const bufferSize = audioCtx.sampleRate * 0.1;
+    const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) {
+        data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (bufferSize * 0.15));
+    }
+    const noise = audioCtx.createBufferSource();
+    noise.buffer = buffer;
+
+    const noiseFilter = audioCtx.createBiquadFilter();
+    noiseFilter.type = 'lowpass';
+    noiseFilter.frequency.setValueAtTime(2000, now);
+    noiseFilter.frequency.exponentialRampToValueAtTime(300, now + 0.1);
+
+    const noiseGain = audioCtx.createGain();
+    noiseGain.gain.setValueAtTime(0.3 * masterVolume, now);
+    noiseGain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+
+    noise.connect(noiseFilter);
+    noiseFilter.connect(noiseGain);
+    noiseGain.connect(audioCtx.destination);
+    noise.start(now);
+}
+
+function playHitSound() {
+    if (!audioCtx) return;
+    const now = audioCtx.currentTime;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(800, now);
+    osc.frequency.exponentialRampToValueAtTime(200, now + 0.1);
+    gain.gain.setValueAtTime(0.15 * masterVolume, now);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start(now);
+    osc.stop(now + 0.15);
+}
+
+function playReloadSound() {
+    if (!audioCtx) return;
+    const now = audioCtx.currentTime;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = 'square';
+    osc.frequency.setValueAtTime(400, now);
+    osc.frequency.setValueAtTime(600, now + 0.1);
+    osc.frequency.setValueAtTime(800, now + 0.2);
+    gain.gain.setValueAtTime(0.1 * masterVolume, now);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start(now);
+    osc.stop(now + 0.35);
+}
+
+function playDamageSound() {
+    if (!audioCtx) return;
+    const now = audioCtx.currentTime;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(100, now);
+    osc.frequency.exponentialRampToValueAtTime(50, now + 0.15);
+    gain.gain.setValueAtTime(0.2 * masterVolume, now);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start(now);
+    osc.stop(now + 0.2);
+}
+
 let selectedCardId = null;
 let myCards = [];
 let inventoryOpen = false;
 let killsForCase = 0;
 let killsForCaseThreshold = 10;
+
+let botKillCount = 0;
+let botKillsForCase = 0;
+let botKillsForCaseThreshold = 20;
+
+let isAdmin = false;
+let wallhackEnabled = false;
+let wallhackCooldown = false;
+let outlineMeshes = [];
+
+let bots = [];
+let botBullets = [];
+let botSpawnTimer = 0;
+let botsEnabled = false;
+let hasSeenOtherPlayer = false;
 
 const CARD_DEFS = {
     niviesino: {
@@ -141,6 +283,14 @@ const CARD_DEFS = {
         color: '#ffaa00',
         desc: '+10 урон, +50 патроны, -5 скорость, +11 HP',
         buffs: { damageBonus: 10, ammoBonus: 50, speedBonus: -5, hpBonus: 11 }
+    },
+    admin: {
+        id: 'admin',
+        name: 'ADMIN',
+        rarity: 'admin',
+        color: '#aa44ff',
+        desc: 'Админ-карточка. P — Wallhack. +67 HP, +11 урон, +52 патроны',
+        buffs: { hpBonus: 67, damageBonus: 11, ammoBonus: 52 }
     }
 };
 
@@ -176,9 +326,29 @@ async function loadCards() {
     } catch(e) {}
 
     try {
+        const adminSnap = await get(ref(db, 'users/' + currentUserId + '/isAdmin'));
+        if (adminSnap.exists() && adminSnap.val() === true) {
+            const hasAdmin = myCards.some(c => c.cardId === 'admin');
+            if (!hasAdmin) {
+                myCards.push({ cardId: 'admin', owned: true });
+                saveCards();
+            }
+        }
+    } catch(e) {}
+
+    try {
         const caseSnap = await get(ref(db, 'users/' + currentUserId + '/cases'));
         const caseCount = caseSnap.exists() ? caseSnap.val() : 0;
         localStorage.setItem('fps_cases', String(caseCount));
+    } catch(e) {}
+
+    try {
+        const statsSnap = await get(ref(db, 'users/' + currentUserId + '/stats'));
+        if (statsSnap.exists()) {
+            const stats = statsSnap.val();
+            killsForCase = stats.killsForCase || 0;
+            botKillsForCase = stats.botKillsForCase || 0;
+        }
     } catch(e) {}
 }
 
@@ -201,6 +371,8 @@ async function saveCaseCount() {
 function applyCardBuffs() {
     const card = CARD_DEFS[selectedCardId] || CARD_DEFS['niviesino'];
     const buffs = card.buffs || {};
+
+    isAdmin = (card.id === 'admin');
 
     myMaxHP = 100 + (buffs.hpBonus || 0);
     myHP = myMaxHP;
@@ -235,7 +407,7 @@ function generateRoomCode() {
 function renderInventory() {
     const caseCount = parseInt(localStorage.getItem('fps_cases') || '0');
     document.getElementById('case-count').textContent = caseCount;
-    document.getElementById('kills-to-case').textContent = Math.max(0, killsForCaseThreshold - killsForCase);
+    document.getElementById('kills-to-case').textContent = `Игроки: ${killsForCase}/${killsForCaseThreshold} | Боты: ${botKillsForCase}/${botKillsForCaseThreshold}`;
     document.getElementById('open-case-btn').disabled = caseCount <= 0;
     document.getElementById('open-case-btn').style.opacity = caseCount <= 0 ? '0.5' : '1';
 
@@ -247,18 +419,20 @@ function renderInventory() {
         if (!def) continue;
 
         const isSelected = entry.cardId === selectedCardId;
+        const rarityColor = def.rarity === 'admin' ? '#aa44ff' : def.color;
         const card = document.createElement('div');
         card.style.cssText = `
             background: rgba(255,255,255,0.05);
-            border: 2px ${isSelected ? 'solid' : 'dashed'} ${def.color};
+            border: 2px ${isSelected ? 'solid' : 'dashed'} ${rarityColor};
             border-radius: 10px;
             padding: 15px;
             cursor: pointer;
             transition: all 0.2s;
         `;
+        const rarityLabel = def.rarity === 'admin' ? 'ADMIN' : def.rarity.toUpperCase();
         card.innerHTML = `
-            <div style="color: ${def.color}; font-weight: bold; font-size: 16px; margin-bottom: 5px;">${def.name}</div>
-            <div style="color: ${def.color}; font-size: 11px; margin-bottom: 8px;">${def.rarity.toUpperCase()}</div>
+            <div style="color: ${rarityColor}; font-weight: bold; font-size: 16px; margin-bottom: 5px;">${def.name}</div>
+            <div style="color: ${rarityColor}; font-size: 11px; margin-bottom: 8px;">${rarityLabel}</div>
             <div style="font-size: 12px; opacity: 0.7; line-height: 1.4;">${def.desc}</div>
             ${isSelected ? '<div style="margin-top: 8px; color: #00ff00; font-size: 12px;">✓ Выбрана</div>' : ''}
         `;
@@ -281,7 +455,7 @@ async function openCase() {
 
     const roll = Math.random();
     let cardId;
-    if (roll < 0.05) cardId = 'fills';
+    if (roll < 0.001) cardId = 'fills';
     else if (roll < 0.35) cardId = 'gav';
     else cardId = 'ziyn';
 
@@ -304,15 +478,387 @@ function updateCardDisplay() {
     document.getElementById('current-card-name').style.color = def.color;
 }
 
+function showToast(msg) {
+    const toast = document.createElement('div');
+    toast.style.cssText = `
+        position: fixed;
+        bottom: 100px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: #0f9b58;
+        color: #fff;
+        padding: 15px 30px;
+        border-radius: 8px;
+        font-size: 18px;
+        font-weight: bold;
+        z-index: 1000;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        animation: toastAnim 3s forwards;
+    `;
+    toast.textContent = msg;
+    document.body.appendChild(toast);
+
+    if (!document.getElementById('toast-style')) {
+        const style = document.createElement('style');
+        style.id = 'toast-style';
+        style.textContent = `
+            @keyframes toastAnim {
+                0% { opacity: 0; transform: translateX(-50%) translateY(20px); }
+                10% { opacity: 1; transform: translateX(-50%) translateY(0); }
+                80% { opacity: 1; transform: translateX(-50%) translateY(0); }
+                100% { opacity: 0; transform: translateX(-50%) translateY(-20px); }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+
+    setTimeout(() => {
+        if (toast.parentNode) toast.remove();
+    }, 3000);
+}
+
+function updateCaseUI() {
+    const el = document.getElementById('kills-to-case');
+    if (el) {
+        el.textContent = `Игроки: ${killsForCase}/${killsForCaseThreshold} | Боты: ${botKillsForCase}/${botKillsForCaseThreshold}`;
+    }
+}
+
+async function saveKillsToDB() {
+    if (!currentUserId) return;
+    try {
+        await update(ref(db, 'users/' + currentUserId + '/stats'), {
+            killsForCase: killsForCase,
+            botKillsForCase: botKillsForCase,
+            totalKills: killsForCase + botKillsForCase
+        });
+    } catch(e) {}
+}
+
+let lastStatsSave = 0;
+function periodicSaveStats() {
+    const now = Date.now();
+    if (currentUserId && now - lastStatsSave > 5000) {
+        lastStatsSave = now;
+        saveKillsToDB();
+    }
+}
+
 function checkCaseReward() {
+
     if (killsForCase >= killsForCaseThreshold) {
         killsForCase = 0;
+        updateCaseUI();
+        saveKillsToDB();
         const caseCount = parseInt(localStorage.getItem('fps_cases') || '0');
         localStorage.setItem('fps_cases', String(caseCount + 1));
+        showToast("📦 Получен кейс (Игроки)!");
         if (currentUserId) {
             set(ref(db, 'users/' + currentUserId + '/cases'), caseCount + 1);
         }
     }
+
+
+    if (botKillsForCase >= botKillsForCaseThreshold) {
+        botKillsForCase = 0;
+        updateCaseUI();
+        saveKillsToDB();
+        const caseCount = parseInt(localStorage.getItem('fps_cases') || '0');
+        localStorage.setItem('fps_cases', String(caseCount + 1));
+        showToast("📦 Получен кейс (Боты)!");
+        if (currentUserId) {
+            set(ref(db, 'users/' + currentUserId + '/cases'), caseCount + 1);
+        }
+    }
+}
+
+function createOutlineMeshes() {
+    if (!scene) return;
+    clearOutlineMeshes();
+
+
+    for (const bot of bots) {
+        if (bot.mesh && bot.hp > 0) {
+            const outlineGeo = new THREE.CapsuleGeometry(0.4, 1.2, 4, 8);
+            const outlineMat = new THREE.MeshBasicMaterial({
+                color: 0xff0000,
+                transparent: true,
+                opacity: 0.25,
+                side: THREE.BackSide,
+                depthTest: false
+            });
+            const outline = new THREE.Mesh(outlineGeo, outlineMat);
+            outline.position.copy(bot.mesh.position);
+            outline.renderOrder = 999;
+            scene.add(outline);
+            outlineMeshes.push({ mesh: outline, target: bot.mesh, offset: new THREE.Vector3() });
+        }
+    }
+
+
+    for (const id in players) {
+        if (id !== myId && players[id] && players[id].mesh) {
+            const outlineGeo = new THREE.CapsuleGeometry(0.4, 1.2, 4, 8);
+            const outlineMat = new THREE.MeshBasicMaterial({
+                color: 0x00ff00,
+                transparent: true,
+                opacity: 0.25,
+                side: THREE.BackSide,
+                depthTest: false
+            });
+            const outline = new THREE.Mesh(outlineGeo, outlineMat);
+            outline.position.copy(players[id].mesh.position);
+            outline.renderOrder = 999;
+            scene.add(outline);
+            outlineMeshes.push({ mesh: outline, target: players[id].mesh, offset: new THREE.Vector3() });
+        }
+    }
+}
+
+function clearOutlineMeshes() {
+    if (!scene || !Array.isArray(outlineMeshes)) return;
+    for (const o of outlineMeshes) {
+        scene.remove(o.mesh);
+        o.mesh.geometry.dispose();
+        o.mesh.material.dispose();
+    }
+    outlineMeshes = [];
+}
+
+function updateOutlineMeshes() {
+    if (!wallhackEnabled || !scene || !Array.isArray(outlineMeshes) || outlineMeshes.length === 0) return;
+    for (const o of outlineMeshes) {
+        if (o.target && o.target.position) {
+            o.mesh.position.copy(o.target.position).add(o.offset);
+        }
+    }
+}
+
+function findSafeSpawnPoint(rng) {
+    for (let attempt = 0; attempt < 20; attempt++) {
+        const x = (rng() - 0.5) * 60;
+        const z = (rng() - 0.5) * 60;
+
+        let safe = true;
+        for (const collider of colliders) {
+            if (x > collider.min.x - 1 && x < collider.max.x + 1 &&
+                z > collider.min.z - 1 && z < collider.max.z + 1) {
+                safe = false;
+                break;
+            }
+        }
+
+        if (safe) return { x, z };
+    }
+    return { x: 0, z: 0 };
+}
+
+function spawnBot(x, z) {
+    if (!scene) return;
+
+    const botId = 'bot_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4);
+    const geometry = new THREE.CapsuleGeometry(0.3, 1, 4, 8);
+    const material = new THREE.MeshStandardMaterial({ color: 0xff0000, roughness: 0.5, metalness: 0.3 });
+    const mesh = new THREE.Mesh(geometry, material);
+    mesh.position.set(x, playerHeight, z);
+    mesh.castShadow = true;
+    scene.add(mesh);
+
+    bots.push({
+        id: botId,
+        mesh: mesh,
+        hp: 100,
+        maxHp: 100,
+        position: new THREE.Vector3(x, playerHeight, z),
+        lastShot: 0,
+        moveTarget: new THREE.Vector3((Math.random() - 0.5) * 40, playerHeight, (Math.random() - 0.5) * 40),
+        respawnTime: 0
+    });
+}
+
+function updateBots(delta, time) {
+    if (!botsEnabled) return;
+
+    for (const bot of bots) {
+
+        if (bot.hp <= 0) {
+            if (time - bot.respawnTime > 5000) {
+                const spawn = findSafeSpawnPoint(Math.random);
+                bot.hp = bot.maxHp;
+                bot.position.set(spawn.x, playerHeight, spawn.z);
+                bot.mesh.position.copy(bot.position);
+                bot.mesh.visible = true;
+                bot.lastShot = 0;
+            }
+            continue;
+        }
+
+
+        const dx = camera.position.x - bot.position.x;
+        const dz = camera.position.z - bot.position.z;
+        const dist = Math.sqrt(dx * dx + dz * dz);
+
+        let moveX = 0, moveZ = 0;
+        if (dist > 5) {
+            const speed = 3;
+            moveX = (dx / dist) * speed * delta;
+            moveZ = (dz / dist) * speed * delta;
+        } else if (dist < 3) {
+            moveX = -(dx / dist) * 2 * delta;
+            moveZ = -(dz / dist) * 2 * delta;
+        }
+
+
+        const newX = bot.position.x + moveX;
+        const newZ = bot.position.z + moveZ;
+
+        let canMoveX = true, canMoveZ = true;
+        for (const collider of colliders) {
+            if (newX > collider.min.x - 0.5 && newX < collider.max.x + 0.5 &&
+                bot.position.z > collider.min.z - 0.5 && bot.position.z < collider.max.z + 0.5) {
+                canMoveX = false;
+            }
+            if (newZ > collider.min.z - 0.5 && newZ < collider.max.z + 0.5 &&
+                bot.position.x > collider.min.x - 0.5 && bot.position.x < collider.max.x + 0.5) {
+                canMoveZ = false;
+            }
+        }
+
+        if (canMoveX) bot.position.x = newX;
+        if (canMoveZ) bot.position.z = newZ;
+
+        bot.position.x = Math.max(-48, Math.min(48, bot.position.x));
+        bot.position.z = Math.max(-48, Math.min(48, bot.position.z));
+        bot.mesh.position.copy(bot.position);
+        bot.mesh.rotation.y = Math.atan2(dx, dz);
+
+
+        if (time - bot.lastShot > 200 && dist < 40 && checkLineOfSight(bot.position, camera.position)) {
+            bot.lastShot = time;
+            fireBotBullet(bot);
+        }
+    }
+}
+
+function checkLineOfSight(fromPos, toPos) {
+    const dx = toPos.x - fromPos.x;
+    const dy = toPos.y - fromPos.y;
+    const dz = toPos.z - fromPos.z;
+    const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
+    const steps = Math.ceil(dist / 2);
+    const stepX = dx / steps;
+    const stepY = dy / steps;
+    const stepZ = dz / steps;
+
+    let cx = fromPos.x, cy = fromPos.y, cz = fromPos.z;
+    for (let i = 0; i < steps; i++) {
+        cx += stepX;
+        cy += stepY;
+        cz += stepZ;
+        if (checkCollision({ x: cx, y: cy, z: cz }, 0.5)) {
+            return false;
+        }
+    }
+    return true;
+}
+function fireBotBullet(bot) {
+    const direction = new THREE.Vector3();
+    direction.subVectors(camera.position, bot.position).normalize();
+
+
+    direction.x += (Math.random() - 0.5) * 0.15;
+    direction.y += (Math.random() - 0.5) * 0.1;
+    direction.z += (Math.random() - 0.5) * 0.15;
+    direction.normalize();
+
+    const bulletGeo = new THREE.SphereGeometry(0.08, 6, 6);
+    const bulletMat = new THREE.MeshBasicMaterial({ color: 0xff4444 });
+    const bullet = new THREE.Mesh(bulletGeo, bulletMat);
+    bullet.position.copy(bot.position);
+    bullet.userData.velocity = direction.multiplyScalar(30);
+    bullet.userData.life = 3;
+    bullet.userData.botId = bot.id;
+    scene.add(bullet);
+    botBullets.push(bullet);
+}
+
+function updateBotBullets(delta) {
+    for (let i = botBullets.length - 1; i >= 0; i--) {
+        const bullet = botBullets[i];
+        bullet.userData.life -= delta;
+
+        if (bullet.userData.life <= 0) {
+            scene.remove(bullet);
+            bullet.geometry.dispose();
+            bullet.material.dispose();
+            botBullets.splice(i, 1);
+            continue;
+        }
+
+        bullet.position.add(bullet.userData.velocity.clone().multiplyScalar(delta));
+
+
+        const dx = bullet.position.x - camera.position.x;
+        const dy = bullet.position.y - camera.position.y;
+        const dz = bullet.position.z - camera.position.z;
+        const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
+
+        if (dist < 1) {
+            takeDamage(10, bullet.userData.botId);
+            scene.remove(bullet);
+            bullet.geometry.dispose();
+            bullet.material.dispose();
+            botBullets.splice(i, 1);
+        }
+    }
+}
+
+function checkPlayerBulletsOnBots() {
+    for (let i = bullets.length - 1; i >= 0; i--) {
+        const bullet = bullets[i];
+
+        for (const bot of bots) {
+            if (bot.hp <= 0) continue;
+
+            const dx = bullet.position.x - bot.position.x;
+            const dy = bullet.position.y - (bot.position.y + 0.5);
+            const dz = bullet.position.z - bot.position.z;
+            const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
+
+            if (dist < 0.8) {
+                bot.hp -= (15 + myDamageBonus);
+                scene.remove(bullet);
+                bullet.geometry.dispose();
+                bullet.material.dispose();
+                bullets.splice(i, 1);
+
+                spawnHitParticles(bullet.position, 0xff0000);
+                initAudio();
+                playHitSound();
+
+                if (bot.hp <= 0) {
+                    bot.hp = 0;
+                    bot.mesh.visible = false;
+                    bot.respawnTime = performance.now();
+                    botKillCount++;
+                    botKillsForCase++;
+                    updateCaseUI();
+                    showToast(`🤖 Бот убит! (${botKillsForCase}/${botKillsForCaseThreshold})`);
+                    checkCaseReward();
+                }
+                break;
+            }
+        }
+    }
+}
+
+function countAliveBots() {
+    return bots.filter(b => b.hp > 0).length;
+}
+
+function updatePlayerCount() {
+    const humanPlayers = Object.keys(players).length;
+    document.getElementById('player-count').textContent = humanPlayers;
 }
 
 let roomListenerActive = false;
@@ -406,6 +952,13 @@ onAuthStateChanged(auth, async (user) => {
         await loadCards();
         updateCardDisplay();
         startRoomListener();
+
+
+        const isAdminUser = myCards.some(c => c.cardId === 'admin');
+        const adminBtn = document.getElementById('admin-grant-btn');
+        if (adminBtn) {
+            adminBtn.style.display = isAdminUser ? 'inline-block' : 'none';
+        }
         document.getElementById('auth-section').innerHTML = `
             <div style="color: #00ff00; font-size: 14px;">✓ ${user.email}</div>
             <button id="logout-btn" style="
@@ -548,6 +1101,8 @@ function takeDamage(amount, attackerId) {
 
     myHP -= amount;
     updateHPBar();
+    initAudio();
+    playDamageSound();
 
     document.getElementById('game-container').style.boxShadow = 'inset 0 0 50px rgba(255,0,0,0.5)';
     setTimeout(() => {
@@ -616,9 +1171,8 @@ function respawn() {
     updateHPBar();
     updateAmmoDisplay();
 
-    const spawnX = (Math.random() - 0.5) * 40;
-    const spawnZ = (Math.random() - 0.5) * 40;
-    camera.position.set(spawnX, playerHeight, spawnZ);
+    const spawn = findSafeSpawnPoint(Math.random);
+    camera.position.set(spawn.x, playerHeight, spawn.z);
     velocity.set(0, 0, 0);
 
     if (playerRef && myRoomId) {
@@ -642,6 +1196,13 @@ function respawn() {
 function returnToLobby() {
     if (!inGame) return;
     inGame = false;
+    hasSeenOtherPlayer = false;
+
+
+    if (wallhackEnabled) {
+        wallhackEnabled = false;
+        clearOutlineMeshes();
+    }
 
     if (window._hitsUnsubscribe) {
         window._hitsUnsubscribe();
@@ -658,18 +1219,18 @@ function returnToLobby() {
     }
 
     if (myRoomId) {
-        // Проверяем, остались ли игроки в комнате
+
         const roomRef = ref(db, 'rooms/' + myRoomId);
         get(roomRef).then((snap) => {
             if (snap.exists()) {
                 const roomData = snap.val();
                 const playerCount = roomData.players ? Object.keys(roomData.players).length : 0;
-                // Если игроков нет — удаляем public_rooms
+
                 if (playerCount === 0) {
                     remove(ref(db, 'public_rooms/' + myRoomId));
                 }
             } else {
-                // Комнаты уже нет — удаляем из списка
+
                 remove(ref(db, 'public_rooms/' + myRoomId));
             }
         });
@@ -726,8 +1287,13 @@ function returnToLobby() {
     scene = null;
     renderer = null;
 
-    // Очищаем кеш текстур чтобы не багажили при перезаходе
+
     textureCache = {};
+
+    wallhackEnabled = false;
+    wallhackCooldown = false;
+    clearOutlineMeshes();
+    outlineMeshes = [];
 
     myRoomId = null;
     killCount = 0;
@@ -736,13 +1302,14 @@ function returnToLobby() {
     myAmmo = myMaxAmmo;
     isReloading = false;
     killsForCase = 0;
+    botKillCount = 0;
     frameCount = 0;
     fps = 60;
     fpsLastCheck = performance.now();
 
     startRoomListener();
 
-    // Обновить список комнат сразу
+
     get(ref(db, 'public_rooms')).then((snap) => {
         renderRoomList(snap.val() || {});
     });
@@ -860,7 +1427,7 @@ async function createRoom() {
         setStatus('❌ Войди в аккаунт чтобы играть!');
         return;
     }
-    
+
     const nickInput = document.getElementById('nickname-input');
     if (nickInput) {
         const nick = nickInput.value.trim();
@@ -884,7 +1451,7 @@ async function createRoom() {
             host: myId,
             seed: roomSeed,
             hostNickname: myNickname,
-            playerCount: 1
+            players: {}
         });
 
         await set(ref(db, 'public_rooms/' + roomCode), {
@@ -894,11 +1461,10 @@ async function createRoom() {
         });
 
         onDisconnect(ref(db, 'rooms/' + roomCode)).remove();
-        // Когда хост отключается — удаляем public_rooms
+
         onDisconnect(ref(db, 'public_rooms/' + roomCode)).remove();
 
-        const spawnX = (Math.random() - 0.5) * 30;
-        const spawnZ = (Math.random() - 0.5) * 30;
+        const spawn = findSafeSpawnPoint(Math.random);
 
         const playerPath = 'rooms/' + roomCode + '/players/' + myId;
         playerRef = ref(db, playerPath);
@@ -906,7 +1472,7 @@ async function createRoom() {
         await set(playerRef, {
             id: myId,
             nickname: myNickname,
-            position: { x: spawnX, y: playerHeight, z: spawnZ },
+            position: { x: spawn.x, y: playerHeight, z: spawn.z },
             rotation: { x: 0, y: 0 },
             hp: myMaxHP,
             joinedAt: Date.now()
@@ -956,8 +1522,9 @@ async function joinRoom(roomCode) {
         roomSeed = roomData.seed || 12345;
         myRoomId = roomCode;
 
-        const spawnX = (Math.random() - 0.5) * 30;
-        const spawnZ = (Math.random() - 0.5) * 30;
+        const playerCount = roomData.players ? Object.keys(roomData.players).length : 0;
+
+        const spawn = findSafeSpawnPoint(Math.random);
 
         const playerPath = 'rooms/' + roomCode + '/players/' + myId;
         playerRef = ref(db, playerPath);
@@ -965,7 +1532,7 @@ async function joinRoom(roomCode) {
         await set(playerRef, {
             id: myId,
             nickname: myNickname,
-            position: { x: spawnX, y: playerHeight, z: spawnZ },
+            position: { x: spawn.x, y: playerHeight, z: spawn.z },
             rotation: { x: 0, y: 0 },
             hp: myMaxHP,
             joinedAt: Date.now()
@@ -992,6 +1559,36 @@ function setupRoomListeners(roomCode) {
 
 function updatePlayers(data) {
     const currentIds = new Set(Object.keys(data));
+    const otherPlayers = Object.keys(data).filter(id => id !== myId);
+
+
+    if (otherPlayers.length > 0) {
+        hasSeenOtherPlayer = true;
+    }
+
+    if (hasSeenOtherPlayer) {
+
+        if (botsEnabled) {
+            botsEnabled = false;
+            for (const bot of bots) {
+                if (bot.mesh) bot.mesh.visible = false;
+            }
+        }
+    } else {
+
+        if (!botsEnabled && bots.length > 0) {
+            botsEnabled = true;
+            for (const bot of bots) {
+                const spawn = findSafeSpawnPoint(Math.random);
+                bot.hp = bot.maxHp;
+                bot.position.set(spawn.x, playerHeight, spawn.z);
+                bot.mesh.position.copy(bot.position);
+                bot.mesh.visible = true;
+                bot.lastShot = 0;
+            }
+        }
+    }
+
 
     if (data[myId] && data[myId].pingEcho) {
         const echoTime = data[myId].pingEcho;
@@ -1052,11 +1649,6 @@ function updatePlayers(data) {
 
     if (myRoomId && currentIds.size <= 1) {
     }
-}
-
-function updatePlayerCount() {
-    const count = Object.keys(players).length;
-    document.getElementById('player-count').textContent = count;
 }
 
 let lastBroadcast = 0;
@@ -1138,6 +1730,9 @@ function shoot() {
     myAmmo--;
     updateAmmoDisplay();
 
+    initAudio();
+    playShootSound();
+
     if (muzzleFlash) {
         muzzleFlash.material.opacity = 1;
         muzzleFlashLight.intensity = 2;
@@ -1176,6 +1771,8 @@ function reload() {
     if (isReloading || myAmmo === myMaxAmmo) return;
     isReloading = true;
     updateAmmoDisplay();
+    initAudio();
+    playReloadSound();
 
     setTimeout(() => {
         myAmmo = myMaxAmmo;
@@ -1347,6 +1944,19 @@ function initScene() {
 
     controls = new PointerLockControls(camera, document.body);
 
+
+    document.addEventListener('mousemove', (e) => {
+        if (!controls.isLocked) return;
+        e.stopImmediatePropagation();
+
+        const euler = new THREE.Euler(0, 0, 0, 'YXZ');
+        euler.setFromQuaternion(camera.quaternion);
+        euler.y -= e.movementX * 0.002 * mouseSensitivity;
+        euler.x -= e.movementY * 0.002 * mouseSensitivity;
+        euler.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, euler.x));
+        camera.quaternion.setFromEuler(euler);
+    }, true);
+
     const ambientLight = new THREE.AmbientLight(0x9090c0, 0.5);
     scene.add(ambientLight);
 
@@ -1453,12 +2063,12 @@ function updateAmmoDisplay() {
 
 function generateTexture(type, size) {
     if (textureCache[type + size]) return textureCache[type + size];
-    
+
     const canvas = document.createElement('canvas');
     canvas.width = size;
     canvas.height = size;
     const ctx = canvas.getContext('2d');
-    
+
     switch(type) {
         case 'concrete':
             ctx.fillStyle = '#666677';
@@ -1479,7 +2089,7 @@ function generateTexture(type, size) {
                 ctx.stroke();
             }
             break;
-            
+
         case 'concrete_wall':
             ctx.fillStyle = '#777788';
             ctx.fillRect(0, 0, size, size);
@@ -1495,7 +2105,7 @@ function generateTexture(type, size) {
                 ctx.fillRect(0, y, size, 2);
             }
             break;
-            
+
         case 'wood':
             ctx.fillStyle = '#8B6914';
             ctx.fillRect(0, 0, size, size);
@@ -1516,7 +2126,7 @@ function generateTexture(type, size) {
                 ctx.stroke();
             }
             break;
-            
+
         case 'metal':
             ctx.fillStyle = '#556677';
             ctx.fillRect(0, 0, size, size);
@@ -1530,7 +2140,7 @@ function generateTexture(type, size) {
             ctx.lineWidth = 2;
             ctx.strokeRect(5, 5, size - 10, size - 10);
             break;
-            
+
         case 'rusty_metal':
             ctx.fillStyle = '#774433';
             ctx.fillRect(0, 0, size, size);
@@ -1547,7 +2157,7 @@ function generateTexture(type, size) {
                 ctx.fillRect(x, y, 3, 3);
             }
             break;
-            
+
         case 'floor_tile':
             ctx.fillStyle = '#444455';
             ctx.fillRect(0, 0, size, size);
@@ -1572,7 +2182,7 @@ function generateTexture(type, size) {
                 ctx.stroke();
             }
             break;
-            
+
         case 'sandbag':
             ctx.fillStyle = '#998866';
             ctx.fillRect(0, 0, size, size);
@@ -1588,7 +2198,7 @@ function generateTexture(type, size) {
             }
             break;
     }
-    
+
     const texture = new THREE.CanvasTexture(canvas);
     texture.wrapS = THREE.RepeatWrapping;
     texture.wrapT = THREE.RepeatWrapping;
@@ -1772,6 +2382,24 @@ function setupControls() {
             case 'KeyR':
                 reload();
                 break;
+            case 'KeyP':
+                if (isAdmin && !wallhackCooldown && scene) {
+                    wallhackEnabled = !wallhackEnabled;
+                    wallhackCooldown = true;
+                    setTimeout(() => {
+                        wallhackCooldown = false;
+                    }, 500);
+                    if (wallhackEnabled) {
+                        setTimeout(() => {
+                            if (scene) createOutlineMeshes();
+                        }, 100);
+                        showToast("👁️ Wallhack включён!");
+                    } else {
+                        clearOutlineMeshes();
+                        showToast("👁️ Wallhack выключен!");
+                    }
+                }
+                break;
         }
     });
 
@@ -1939,6 +2567,15 @@ function animate() {
     }
 
     updateHitParticles(delta);
+    updateBots(delta, time);
+    updateBotBullets(delta);
+    checkPlayerBulletsOnBots();
+
+    if (inGame && scene) {
+        updateOutlineMeshes();
+    }
+
+    periodicSaveStats();
 
     if (myRoomId && !isDead && !window._hitsUnsubscribe) {
         const hitsPath = 'rooms/' + myRoomId + '/hits';
@@ -1957,6 +2594,7 @@ function animate() {
             if (death.shooterId === myId) {
                 killCount++;
                 killsForCase++;
+                updateCaseUI();
                 checkCaseReward();
                 updateHPBar();
             }
@@ -2035,6 +2673,7 @@ function updateRemoteHPBars() {
 
 function startGame(roomCode) {
     inGame = true;
+    hasSeenOtherPlayer = false;
 
     const nickInput = document.getElementById('nickname-input');
     if (nickInput && nickInput.value.trim()) {
@@ -2051,8 +2690,22 @@ function startGame(roomCode) {
 
     applyCardBuffs();
 
+    bots = [];
+    botBullets = [];
+    botSpawnTimer = 0;
+    botKillCount = 0;
+    botsEnabled = false;
+
     initScene();
     setupControls();
+
+
+    const rng = Math.random;
+    const spawn1 = findSafeSpawnPoint(rng);
+    const spawn2 = findSafeSpawnPoint(rng);
+    spawnBot(spawn1.x, spawn1.z);
+    spawnBot(spawn2.x, spawn2.z);
+    botsEnabled = true;
 
     window.addEventListener('resize', () => {
         if (!camera || !renderer) return;
@@ -2093,8 +2746,51 @@ function init() {
 
     document.getElementById('open-case-btn').addEventListener('click', openCase);
 
+    document.getElementById('settings-btn').addEventListener('click', () => {
+        document.getElementById('settings-modal').style.display = 'flex';
+        loadSettings();
+    });
+
+    document.getElementById('close-settings-btn').addEventListener('click', () => {
+        document.getElementById('settings-modal').style.display = 'none';
+        saveSettings();
+    });
+
+    document.getElementById('volume-slider').addEventListener('input', (e) => {
+        masterVolume = e.target.value / 100;
+        document.getElementById('volume-value').textContent = e.target.value;
+    });
+
+    document.getElementById('sens-slider').addEventListener('input', (e) => {
+        mouseSensitivity = e.target.value / 10;
+        document.getElementById('sens-value').textContent = mouseSensitivity.toFixed(1);
+    });
+
+    document.getElementById('admin-grant-btn').addEventListener('click', async () => {
+        const targetNick = prompt('Введи ник игрока для выдачи админки:');
+        if (!targetNick) return;
+
+        try {
+            const usersSnap = await get(ref(db, 'users'));
+            if (usersSnap.exists()) {
+                const users = usersSnap.val();
+                for (const uid in users) {
+                    if (users[uid].nickname === targetNick) {
+                        await set(ref(db, 'users/' + uid + '/isAdmin'), true);
+                        showToast(`✅ Админка выдана игроку ${targetNick}!`);
+                        return;
+                    }
+                }
+            }
+            showToast('❌ Игрок не найден!');
+        } catch(e) {
+            showToast('❌ Ошибка: ' + e.message);
+        }
+    });
+
     loadCards();
     updateCardDisplay();
+    loadSettings();
 }
 
 init();

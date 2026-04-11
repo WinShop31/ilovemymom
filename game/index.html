@@ -222,6 +222,11 @@
             color: #fff;
         }
 
+        #settings-btn {
+            background: #556677;
+            color: #fff;
+        }
+
         #create-room-btn {
             background: #e94560;
             color: #fff;
@@ -331,6 +336,7 @@
 
                 <div id="game-buttons" class="menu-section">
                     <button id="inventory-btn">🎴 Инвентарь</button>
+                    <button id="settings-btn">⚙️ Настройки</button>
                     <div id="selected-card-display">Выбрана: <span id="current-card-name">Niviesino?</span></div>
                 </div>
 
@@ -410,6 +416,17 @@
                 cursor: pointer;
                 margin-bottom: 20px;
             ">📦 Открыть кейс</button>
+            <button id="admin-grant-btn" style="
+                padding: 10px 25px;
+                background: #aa44ff;
+                border: none;
+                border-radius: 8px;
+                color: #fff;
+                font-size: 14px;
+                cursor: pointer;
+                margin-bottom: 20px;
+                display: none;
+            ">🔑 Выдать админку (по нику)</button>
             <div id="cards-container" style="
                 display: grid;
                 grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
@@ -418,6 +435,57 @@
             "></div>
             <button id="close-inventory-btn" style="
                 margin-top: 20px;
+                padding: 10px 30px;
+                background: #555;
+                border: none;
+                border-radius: 8px;
+                color: #fff;
+                font-size: 16px;
+                cursor: pointer;
+            ">Закрыть</button>
+        </div>
+    </div>
+
+    <div id="settings-modal" style="
+        display: none;
+        position: fixed;
+        top: 0; left: 0;
+        width: 100%; height: 100%;
+        background: rgba(0,0,0,0.85);
+        z-index: 500;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+    ">
+        <div style="
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            padding: 30px;
+            border-radius: 15px;
+            max-width: 450px;
+            width: 90%;
+            text-align: center;
+            color: #fff;
+        ">
+            <h2 style="color: #e94560; margin-bottom: 20px;">⚙️ Настройки</h2>
+
+            <div style="margin-bottom: 20px; text-align: left;">
+                <label style="display: block; margin-bottom: 8px; font-size: 14px;">🔊 Громкость: <span id="volume-value">50</span>%</label>
+                <input type="range" id="volume-slider" min="0" max="100" value="50" style="
+                    width: 100%;
+                    accent-color: #e94560;
+                ">
+            </div>
+
+            <div style="margin-bottom: 20px; text-align: left;">
+                <label style="display: block; margin-bottom: 8px; font-size: 14px;">🖱️ Чувствительность мыши: <span id="sens-value">1.0</span></label>
+                <input type="range" id="sens-slider" min="1" max="30" value="10" step="1" style="
+                    width: 100%;
+                    accent-color: #e94560;
+                ">
+            </div>
+
+            <button id="close-settings-btn" style="
+                margin-top: 10px;
                 padding: 10px 30px;
                 background: #555;
                 border: none;
