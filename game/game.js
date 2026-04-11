@@ -306,6 +306,67 @@ function checkCaseReward() {
     }
 }
 
+let roomListenerActive = false;
+
+function startRoomListener() {
+    if (roomListenerActive) return;
+    roomListenerActive = true;
+
+    onValue(ref(db, 'public_rooms'), (snapshot) => {
+        const rooms = snapshot.val() || {};
+        renderRoomList(rooms);
+    });
+}
+
+function renderRoomList(rooms) {
+    const container = document.getElementById('room-list');
+    if (!container) return;
+
+    const roomKeys = Object.keys(rooms);
+    if (roomKeys.length === 0) {
+        container.innerHTML = '<div style="opacity: 0.5;">Нет активных комнат</div>';
+        return;
+    }
+
+    container.innerHTML = '';
+    for (const code of roomKeys) {
+        const room = rooms[code];
+        const div = document.createElement('div');
+        div.style.cssText = `
+            padding: 10px 15px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 8px;
+            margin: 5px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        `;
+        div.innerHTML = `
+            <div>
+                <div style="color: #e94560; font-weight: bold;">${code}</div>
+                <div style="font-size: 12px; opacity: 0.6;">Хост: ${room.host || 'Unknown'}</div>
+            </div>
+            <button class="join-room-btn" data-code="${code}" style="
+                padding: 5px 15px;
+                background: #0f9b58;
+                border: none;
+                border-radius: 5px;
+                color: #fff;
+                cursor: pointer;
+                font-size: 14px;
+            ">Войти</button>
+        `;
+        container.appendChild(div);
+    }
+
+    document.querySelectorAll('.join-room-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const code = btn.getAttribute('data-code');
+            joinRoom(code);
+        });
+    });
+}
+
 async function authLogin(email, password) {
     setStatus('<span class="loading"></span> Входим...');
     try {
@@ -335,6 +396,7 @@ onAuthStateChanged(auth, async (user) => {
         authReady = true;
         await loadCards();
         updateCardDisplay();
+        startRoomListener();
         document.getElementById('auth-section').innerHTML = `
             <div style="color: #00ff00; font-size: 14px;">✓ ${user.email}</div>
             <button id="logout-btn" style="
@@ -356,39 +418,11 @@ onAuthStateChanged(auth, async (user) => {
         myCards = [];
         document.getElementById('auth-section').innerHTML = `
             <div style="display: flex; flex-direction: column; gap: 8px; align-items: center;">
-                <input type="email" id="auth-email" placeholder="Email" style="
-                    padding: 8px 15px;
-                    border: 2px solid #e94560;
-                    border-radius: 8px;
-                    background: rgba(255,255,255,0.1);
-                    color: #fff;
-                    width: 250px;
-                ">
-                <input type="password" id="auth-pass" placeholder="Пароль" style="
-                    padding: 8px 15px;
-                    border: 2px solid #e94560;
-                    border-radius: 8px;
-                    background: rgba(255,255,255,0.1);
-                    color: #fff;
-                    width: 250px;
-                ">
+                <input type="email" id="auth-email" placeholder="Email">
+                <input type="password" id="auth-pass" placeholder="Пароль">
                 <div style="display: flex; gap: 10px;">
-                    <button id="login-btn" style="
-                        padding: 8px 20px;
-                        background: #0f9b58;
-                        border: none;
-                        border-radius: 8px;
-                        color: #fff;
-                        cursor: pointer;
-                    ">Войти</button>
-                    <button id="register-btn" style="
-                        padding: 8px 20px;
-                        background: #e94560;
-                        border: none;
-                        border-radius: 8px;
-                        color: #fff;
-                        cursor: pointer;
-                    ">Регистрация</button>
+                    <button id="login-btn">Войти</button>
+                    <button id="register-btn">Регистрация</button>
                 </div>
             </div>
         `;
@@ -615,6 +649,8 @@ function returnToLobby() {
     }
 
     if (myRoomId) {
+        remove(ref(db, 'public_rooms/' + myRoomId));
+
         const roomRef = ref(db, 'rooms/' + myRoomId);
         get(roomRef).then((snap) => {
             if (snap.exists()) {
@@ -824,10 +860,18 @@ async function createRoom() {
         await set(ref(db, 'rooms/' + roomCode), {
             created: Date.now(),
             host: myId,
-            seed: roomSeed
+            seed: roomSeed,
+            hostNickname: myNickname,
+            playerCount: 1
         });
 
-        onDisconnect(ref(db, 'rooms/' + roomCode)).remove();
+        await set(ref(db, 'public_rooms/' + roomCode), {
+            code: roomCode,
+            host: myNickname,
+            createdAt: Date.now()
+        });
+
+        onDisconnect(ref(db, 'public_rooms/' + roomCode)).remove();
 
         const spawnX = (Math.random() - 0.5) * 30;
         const spawnZ = (Math.random() - 0.5) * 30;
