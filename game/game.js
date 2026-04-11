@@ -87,6 +87,9 @@ let isFiring = false;
 let fireRate = 65;
 let lastFireTime = 0;
 let lastHealTime = 0;
+let muzzleFlash = null;
+let muzzleFlashLight = null;
+let hitParticles = [];
 
 function setStatus(msg) {
     document.getElementById('status-msg').innerHTML = msg;
@@ -668,6 +671,45 @@ function broadcastState() {
     });
 }
 
+function spawnHitParticles(position, color) {
+    const count = 8;
+    for (let i = 0; i < count; i++) {
+        const particle = new THREE.Mesh(
+            new THREE.BoxGeometry(0.08, 0.08, 0.08),
+            new THREE.MeshBasicMaterial({ color: color })
+        );
+        particle.position.copy(position);
+        particle.userData.velocity = new THREE.Vector3(
+            (Math.random() - 0.5) * 5,
+            (Math.random() - 0.5) * 5,
+            (Math.random() - 0.5) * 5
+        );
+        particle.userData.life = 0.5;
+        scene.add(particle);
+        hitParticles.push(particle);
+    }
+}
+
+function updateHitParticles(delta) {
+    for (let i = hitParticles.length - 1; i >= 0; i--) {
+        const p = hitParticles[i];
+        p.userData.life -= delta;
+
+        if (p.userData.life <= 0) {
+            scene.remove(p);
+            p.geometry.dispose();
+            p.material.dispose();
+            hitParticles.splice(i, 1);
+            continue;
+        }
+
+        p.position.add(p.userData.velocity.clone().multiplyScalar(delta));
+        p.material.opacity = p.userData.life * 2;
+        p.material.transparent = true;
+        p.scale.setScalar(p.userData.life * 2);
+    }
+}
+
 function shoot() {
     const now = Date.now();
     if (isDead || !controls.isLocked || isReloading) return;
@@ -681,6 +723,15 @@ function shoot() {
     lastFireTime = now;
     myAmmo--;
     updateAmmoDisplay();
+
+    if (muzzleFlash) {
+        muzzleFlash.material.opacity = 1;
+        muzzleFlashLight.intensity = 2;
+        setTimeout(() => {
+            muzzleFlash.material.opacity = 0;
+            muzzleFlashLight.intensity = 0;
+        }, 50);
+    }
 
     const direction = new THREE.Vector3();
     camera.getWorldDirection(direction);
@@ -866,9 +917,10 @@ function initScene() {
     renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.shadowMap.type = THREE.BasicShadowMap;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 1.2;
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
 
     const oldCanvas = document.getElementById('game-canvas');
     if (oldCanvas) oldCanvas.remove();
@@ -887,14 +939,14 @@ function initScene() {
     const directionalLight = new THREE.DirectionalLight(0xfff5e0, 1.0);
     directionalLight.position.set(30, 50, 20);
     directionalLight.castShadow = true;
-    directionalLight.shadow.mapSize.width = 2048;
-    directionalLight.shadow.mapSize.height = 2048;
+    directionalLight.shadow.mapSize.width = 1024;
+    directionalLight.shadow.mapSize.height = 1024;
     directionalLight.shadow.camera.near = 0.5;
-    directionalLight.shadow.camera.far = 150;
-    directionalLight.shadow.camera.left = -60;
-    directionalLight.shadow.camera.right = 60;
-    directionalLight.shadow.camera.top = 60;
-    directionalLight.shadow.camera.bottom = -60;
+    directionalLight.shadow.camera.far = 100;
+    directionalLight.shadow.camera.left = -40;
+    directionalLight.shadow.camera.right = 40;
+    directionalLight.shadow.camera.top = 40;
+    directionalLight.shadow.camera.bottom = -40;
     directionalLight.shadow.bias = -0.0001;
     scene.add(directionalLight);
 
@@ -939,6 +991,17 @@ function createWeaponModel() {
     weaponModel.position.set(0.3, -0.28, -0.5);
     camera.add(weaponModel);
     scene.add(camera);
+
+    muzzleFlash = new THREE.Mesh(
+        new THREE.SphereGeometry(0.05, 6, 6),
+        new THREE.MeshBasicMaterial({ color: 0xffaa00, transparent: true, opacity: 0 })
+    );
+    muzzleFlash.position.set(0, 0.02, -0.75);
+    weaponModel.add(muzzleFlash);
+
+    muzzleFlashLight = new THREE.PointLight(0xffaa00, 0, 5);
+    muzzleFlashLight.position.copy(muzzleFlash.position);
+    weaponModel.add(muzzleFlashLight);
 
     createAmmoDisplay();
 }
@@ -1008,7 +1071,7 @@ function generateMap(seed) {
     addCollider(wall4);
 
     const boxColors = [0x8b5e3c, 0x4a7c59, 0x5c4a7c, 0x7c5c4a, 0x4a5c7c, 0x8b6914];
-    const numObjects = 8 + Math.floor(rng() * 8);
+    const numObjects = 15 + Math.floor(rng() * 10);
 
     for (let i = 0; i < numObjects; i++) {
         const x = (rng() - 0.5) * 80;
@@ -1025,13 +1088,59 @@ function generateMap(seed) {
         addCollider(box);
     }
 
-    const numPlatforms = 2 + Math.floor(rng() * 3);
+    const numBarrels = 5 + Math.floor(rng() * 5);
+    for (let i = 0; i < numBarrels; i++) {
+        const x = (rng() - 0.5) * 70;
+        const z = (rng() - 0.5) * 70;
+        if (Math.abs(x) < 4 && Math.abs(z) < 4) continue;
+
+        const barrelGeo = new THREE.CylinderGeometry(0.5, 0.5, 1.5, 8);
+        const barrelMat = new THREE.MeshStandardMaterial({
+            color: Math.random() > 0.5 ? 0xcc4400 : 0x4488cc,
+            roughness: 0.6,
+            metalness: 0.5
+        });
+        const barrel = new THREE.Mesh(barrelGeo, barrelMat);
+        barrel.position.set(x, 0.75, z);
+        barrel.castShadow = true;
+        barrel.receiveShadow = true;
+        barrel.frustumCulled = true;
+        scene.add(barrel);
+        addCollider(barrel);
+    }
+
+    const numWalls = 3 + Math.floor(rng() * 4);
+    for (let i = 0; i < numWalls; i++) {
+        const x = (rng() - 0.5) * 60;
+        const z = (rng() - 0.5) * 60;
+        const rotY = rng() * Math.PI;
+        const wallW = 4 + rng() * 6;
+        const wallH = 2 + rng() * 2;
+
+        const wallGeo = new THREE.BoxGeometry(wallW, wallH, 0.3);
+        const wallMatLocal = new THREE.MeshStandardMaterial({
+            color: 0x888899,
+            roughness: 0.7,
+            metalness: 0.2
+        });
+        const wall = new THREE.Mesh(wallGeo, wallMatLocal);
+        wall.position.set(x, wallH / 2, z);
+        wall.rotation.y = rotY;
+        wall.castShadow = true;
+        wall.receiveShadow = true;
+        wall.frustumCulled = true;
+        scene.add(wall);
+        addCollider(wall);
+    }
+
+    const numPlatforms = 3 + Math.floor(rng() * 3);
     for (let i = 0; i < numPlatforms; i++) {
         const x = (rng() - 0.5) * 60;
         const z = (rng() - 0.5) * 60;
-        const w = 3 + rng() * 4;
-        const d = 3 + rng() * 4;
+        const w = 3 + rng() * 5;
+        const d = 3 + rng() * 5;
         const plat = createBox(x, 0.4, z, w, 0.8, d, 0x555566);
+        plat.frustumCulled = true;
         addCollider(plat);
     }
 }
@@ -1216,6 +1325,7 @@ function animate() {
         bullet.position.add(bullet.userData.velocity.clone().multiplyScalar(delta));
 
         if (checkCollision(bullet.position, 0.1)) {
+            spawnHitParticles(bullet.position, 0x888888);
             scene.remove(bullet);
             bullet.geometry.dispose();
             bullet.material.dispose();
@@ -1225,6 +1335,7 @@ function animate() {
 
         const hitPlayerId = checkBulletHit(bullet.position, myId);
         if (hitPlayerId) {
+            spawnHitParticles(bullet.position, 0xff0000);
             scene.remove(bullet);
             bullet.geometry.dispose();
             bullet.material.dispose();
@@ -1242,6 +1353,8 @@ function animate() {
             }
         }
     }
+
+    updateHitParticles(delta);
 
     if (myRoomId && !isDead && !window._hitsUnsubscribe) {
         const hitsPath = 'rooms/' + myRoomId + '/hits';
