@@ -167,6 +167,15 @@ async function loadCards() {
     }
 
     try {
+        const nickSnap = await get(ref(db, 'users/' + currentUserId + '/nickname'));
+        if (nickSnap.exists()) {
+            myNickname = nickSnap.val();
+            const nickInput = document.getElementById('nickname-input');
+            if (nickInput) nickInput.value = myNickname;
+        }
+    } catch(e) {}
+
+    try {
         const caseSnap = await get(ref(db, 'users/' + currentUserId + '/cases'));
         const caseCount = caseSnap.exists() ? caseSnap.val() : 0;
         localStorage.setItem('fps_cases', String(caseCount));
@@ -724,6 +733,8 @@ function returnToLobby() {
     frameCount = 0;
     fps = 60;
     fpsLastCheck = performance.now();
+
+    startRoomListener();
 
     console.log('Вернулся в лобби');
 }
@@ -2009,6 +2020,15 @@ function updateRemoteHPBars() {
 
 function startGame(roomCode) {
     inGame = true;
+
+    const nickInput = document.getElementById('nickname-input');
+    if (nickInput && nickInput.value.trim()) {
+        myNickname = nickInput.value.trim().substring(0, 15);
+        if (currentUserId) {
+            set(ref(db, 'users/' + currentUserId + '/nickname'), myNickname);
+        }
+    }
+
     document.getElementById('menu').classList.add('hidden');
     document.getElementById('game-container').classList.add('active');
     document.getElementById('room-info').textContent = 'Комната: ' + roomCode + ' | Поделись кодом!';
