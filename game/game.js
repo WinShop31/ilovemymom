@@ -578,7 +578,36 @@ function updatePlayers(data) {
             createRemotePlayer(id, playerData.nickname);
         }
 
-        updateRemotePlayer(id, playerData.position, playerData.rotation, playerData.hp, playerData.nickname);
+        const player = players[id];
+        player.prevPosition = player.position.clone();
+        player.targetPosition = new THREE.Vector3(playerData.position.x, playerData.position.y - bodyOffset, playerData.position.z);
+        player.lerpAlpha = 0;
+        player.lastUpdate = Date.now();
+
+        player.rotation.set(playerData.rotation.x || 0, playerData.rotation.y || 0, 0);
+        player.mesh.rotation.y = player.rotation.y;
+
+        if (playerData.nickname) {
+            player.nickname = playerData.nickname;
+            if (player.nicknameEl) {
+                player.nicknameEl.textContent = playerData.nickname;
+            }
+        }
+
+        if (playerData.hp !== undefined) {
+            player.hp = playerData.hp;
+            if (player.hpBarFg) {
+                const pct = Math.max(0, playerData.hp);
+                player.hpBarFg.style.width = pct + '%';
+                if (pct < 30) {
+                    player.hpBarFg.style.background = '#ff0000';
+                } else if (pct < 60) {
+                    player.hpBarFg.style.background = '#ffaa00';
+                } else {
+                    player.hpBarFg.style.background = '#00ff00';
+                }
+            }
+        }
     }
 
     updatePlayerCount();
@@ -719,7 +748,11 @@ function createRemotePlayer(playerId, nickname) {
 
     players[playerId] = {
         mesh: group,
-        position: new THREE.Vector3(),
+        position: new THREE.Vector3(0, 1, 5),
+        prevPosition: new THREE.Vector3(0, 1, 5),
+        targetPosition: new THREE.Vector3(0, 1, 5),
+        lerpAlpha: 1,
+        lastUpdate: 0,
         rotation: new THREE.Euler(),
         hp: 100,
         nickname: nickname || 'Player',
@@ -1027,11 +1060,13 @@ function animate() {
         camera.position.x = Math.max(-48, Math.min(48, camera.position.x));
         camera.position.z = Math.max(-48, Math.min(48, camera.position.z));
 
-        if (time - lastBroadcast > 200) {
+        if (time - lastBroadcast > 100) {
             broadcastState();
             lastBroadcast = time;
         }
     }
+
+    interpolatePlayers(delta);
 
     for (let i = bullets.length - 1; i >= 0; i--) {
         const bullet = bullets[i];
@@ -1100,6 +1135,20 @@ function animate() {
     updateRemoteHPBars();
 
     renderer.render(scene, camera);
+}
+
+function interpolatePlayers(delta) {
+    for (const id in players) {
+        if (id === myId) continue;
+        const player = players[id];
+        if (!player || !player.targetPosition) continue;
+
+        player.lerpAlpha += delta * 8;
+        if (player.lerpAlpha > 1) player.lerpAlpha = 1;
+
+        player.position.lerpVectors(player.prevPosition, player.targetPosition, player.lerpAlpha);
+        player.mesh.position.copy(player.position);
+    }
 }
 
 function updateRemoteHPBars() {
