@@ -658,16 +658,19 @@ function returnToLobby() {
     }
 
     if (myRoomId) {
-        // Удаляем комнату только если мы последний игрок
+        // Проверяем, остались ли игроки в комнате
         const roomRef = ref(db, 'rooms/' + myRoomId);
         get(roomRef).then((snap) => {
             if (snap.exists()) {
                 const roomData = snap.val();
                 const playerCount = roomData.players ? Object.keys(roomData.players).length : 0;
-                if (playerCount <= 1) {
-                    remove(roomRef);
+                // Если игроков нет — удаляем public_rooms
+                if (playerCount === 0) {
                     remove(ref(db, 'public_rooms/' + myRoomId));
                 }
+            } else {
+                // Комнаты уже нет — удаляем из списка
+                remove(ref(db, 'public_rooms/' + myRoomId));
             }
         });
     }
@@ -890,6 +893,8 @@ async function createRoom() {
             createdAt: Date.now()
         });
 
+        onDisconnect(ref(db, 'rooms/' + roomCode)).remove();
+        // Когда хост отключается — удаляем public_rooms
         onDisconnect(ref(db, 'public_rooms/' + roomCode)).remove();
 
         const spawnX = (Math.random() - 0.5) * 30;
