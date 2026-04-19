@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FWHITEVPN | Доступ без границ</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #080808;
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(255, 255, 255, 0.05) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(255, 255, 255, 0.03) 0px, transparent 50%);
+            color: #e5e7eb;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.02);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.07);
+        }
+        .input-field {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+        .input-field:focus {
+            border-color: #ffffff;
+            background: rgba(255, 255, 255, 0.07);
+            outline: none;
+        }
+        .btn-white {
+            background: #ffffff;
+            color: #000000;
+            transition: all 0.2s ease;
+        }
+        .btn-white:hover {
+            background: #e5e5e5;
+            transform: translateY(-1px);
+        }
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+
+    <div id="app-container" class="max-w-md w-full m-4">
+        <div class="glass-card rounded-[2.5rem] p-8 md:p-10 shadow-2xl">
+            
+            <div class="text-center mb-10">
+                <h1 class="text-3xl font-extrabold tracking-tighter text-white mb-1">FWHITE<span class="text-gray-500">VPN</span></h1>
+                <p class="text-gray-500 text-xs uppercase tracking-[0.2em]">Next-Gen Privacy</p>
+            </div>
+
+            <div id="step-auth">
+                <h2 id="auth-title" class="text-xl font-bold mb-6 text-center">Создать аккаунт</h2>
+                <div class="space-y-4">
+                    <input type="email" id="email" placeholder="Email" class="input-field w-full rounded-2xl px-5 py-4 text-sm">
+                    <input type="password" id="password" placeholder="Пароль" class="input-field w-full rounded-2xl px-5 py-4 text-sm">
+                    
+                    <button onclick="handleAuth()" id="btn-main" class="btn-white w-full py-4 rounded-2xl font-bold shadow-xl mt-2">
+                        Зарегистрироваться
+                    </button>
+
+                    <div class="text-center mt-6">
+                        <button onclick="toggleMode()" id="mode-toggle" class="text-gray-400 text-xs hover:text-white transition-colors">
+                            Уже есть аккаунт? Войти
+                        </button>
+                    </div>
+                    
+                    <p id="auth-error" class="text-red-400 text-[10px] text-center mt-2 uppercase tracking-wider"></p>
+                </div>
+            </div>
+
+            <div id="step-survey" class="hidden">
+                <h2 class="text-xl font-bold mb-2">Предрегистрация</h2>
+                <p class="text-gray-500 text-xs mb-8">Заполни анкету для получения раннего доступа.</p>
+                
+                <div class="space-y-5">
+                    <div>
+                        <label class="block text-[10px] uppercase font-bold text-gray-500 mb-2 ml-1 tracking-widest">Username Telegram</label>
+                        <input type="text" id="field-tg" placeholder="@nickname" class="input-field w-full rounded-2xl px-5 py-4 text-sm">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-[10px] uppercase font-bold text-gray-500 mb-2 ml-1 tracking-widest">Почему именно наш VPN?</label>
+                        <textarea id="field-reason" rows="3" placeholder="Опиши свои ожидания..." class="input-field w-full rounded-2xl px-5 py-4 text-sm resize-none"></textarea>
+                    </div>
+
+                    <div class="flex items-center space-x-3 pt-2">
+                        <input id="field-consent" type="checkbox" class="w-5 h-5 rounded-lg border-gray-800 bg-gray-900 accent-white">
+                        <label for="field-consent" class="text-[11px] text-gray-500 leading-tight">
+                            Я согласен на обработку данных
+                        </label>
+                    </div>
+
+                    <button onclick="handleSurvey()" id="btn-submit" class="btn-white w-full py-4 rounded-2xl font-bold shadow-xl mt-4">
+                        Отправить заявку
+                    </button>
+                </div>
+            </div>
+
+            <div id="step-success" class="hidden text-center py-10">
+                <div class="text-6xl mb-6">🥂</div>
+                <h2 class="text-2xl font-bold text-white mb-3">Заявка принята</h2>
+                <p class="text-gray-500 text-sm leading-relaxed">
+                    Твой профиль в очереди на активацию. Мы напишем тебе в Telegram.
+                </p>
+            </div>
+
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCoxtfjB6Bu_gVOQGMruSkMjRb8wLgRbgg",
+            authDomain: "github-auth-8920a.firebaseapp.com",
+            projectId: "github-auth-8920a",
+            storageBucket: "github-auth-8920a.firebasestorage.app",
+            messagingSenderId: "338634883845",
+            appId: "1:338634883845:web:fedfcb2f073d07a3e0ad6c",
+            measurementId: "G-F17SJQSZP3",
+            databaseURL: "https://github-auth-8920a-default-rtdb.firebaseio.com"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getDatabase(app);
+
+        let isLoginMode = false;
+        let userUID = null;
+
+        window.toggleMode = () => {
+            isLoginMode = !isLoginMode;
+            const title = document.getElementById('auth-title');
+            const btn = document.getElementById('btn-main');
+            const toggle = document.getElementById('mode-toggle');
+            
+            if(isLoginMode) {
+                title.innerText = "С возвращением";
+                btn.innerText = "Войти";
+                toggle.innerText = "Нет аккаунта? Создать";
+            } else {
+                title.innerText = "Создать аккаунт";
+                btn.innerText = "Зарегистрироваться";
+                toggle.innerText = "Уже есть аккаунт? Войти";
+            }
+        };
+
+        window.handleAuth = async () => {
+            const email = document.getElementById('email').value;
+            const pass = document.getElementById('password').value;
+            const errBox = document.getElementById('auth-error');
+            const btn = document.getElementById('btn-main');
+
+            if(!email || !pass) { errBox.innerText = "ЗАПОЛНИТЕ ПОЛЯ"; return; }
+            btn.disabled = true;
+
+            try {
+                let res;
+                if(isLoginMode) {
+                    res = await signInWithEmailAndPassword(auth, email, pass);
+                } else {
+                    res = await createUserWithEmailAndPassword(auth, email, pass);
+                }
+                userUID = res.user.uid;
+                
+                document.getElementById('step-auth').classList.add('hidden');
+                document.getElementById('step-survey').classList.remove('hidden');
+            } catch (e) {
+                errBox.innerText = "ОШИБКА: " + e.code;
+                btn.disabled = false;
+            }
+        };
+
+        window.handleSurvey = async () => {
+            const tg = document.getElementById('field-tg').value;
+            const reason = document.getElementById('field-reason').value;
+            const consent = document.getElementById('field-consent').checked;
+
+            if(!tg || !reason || !consent) { alert("Заполни все поля!"); return; }
+
+            try {
+                await set(ref(db, 'registrations/' + userUID), {
+                    tg_user: tg,
+                    why_us: reason,
+                    date: new Date().toLocaleString(),
+                    status: "new"
+                });
+
+                document.getElementById('step-survey').classList.add('hidden');
+                document.getElementById('step-success').classList.remove('hidden');
+            } catch (e) {
+                alert("Ошибка сохранения: " + e.message);
+            }
+        };
+    </script>
+</body>
+                  </html>
