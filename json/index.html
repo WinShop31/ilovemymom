@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VLESS Sub Configurator</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #f8f9fa; padding-top: 50px; }
+        .container { max-width: 600px; }
+        textarea { font-family: monospace; font-size: 12px; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <h4 class="card-title mb-4">VLESS Sub Generator 🛠️</h4>
+            
+            <div class="mb-3">
+                <label class="form-label">Название подписки (Title)</label>
+                <input type="text" id="subTitle" class="form-control" placeholder="Например: BY F" value="BY F">
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Вставь ссылки или JSON массив</label>
+                <textarea id="inputData" class="form-control" rows="8" placeholder='["vless://...", "vless://..."]'></textarea>
+            </div>
+
+            <button onclick="generate()" class="btn btn-primary w-100 mb-3">Сгенерировать подписку</button>
+
+            <div id="resultArea" style="display: none;">
+                <label class="form-label">Готовый Base64 (для вставки в приложение):</label>
+                <textarea id="outputBase64" class="form-control mb-2" rows="5" readonly></textarea>
+                <button onclick="copyText()" class="btn btn-outline-secondary btn-sm">Копировать в буфер</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function generate() {
+        const title = document.getElementById('subTitle').value || 'Subscription';
+        const input = document.getElementById('inputData').value.strip();
+        let links = [];
+
+        try {
+            // Пытаемся распарсить как JSON
+            const parsed = JSON.parse(input);
+            links = Array.isArray(parsed) ? parsed : [parsed];
+        } catch (e) {
+            // Если не JSON, просто берем по строкам
+            links = input.split('\n').filter(l => l.trim().startsWith('vless://'));
+        }
+
+        if (links.length === 0) {
+            alert('Не найдено валидных VLESS ссылок!');
+            return;
+        }
+
+        // Формируем финальный список с инфо-строкой
+        const infoNode = `vless://info@0.0.0.0:443?type=none#${title}`;
+        const fullContent = [infoNode, ...links].join('\n');
+
+        // Кодируем в Base64 (с поддержкой Unicode)
+        const encoded = btoa(unescape(encodeURIComponent(fullContent)));
+
+        document.getElementById('outputBase64').value = encoded;
+        document.getElementById('resultArea').style.display = 'block';
+    }
+
+    function copyText() {
+        const copyText = document.getElementById("outputBase64");
+        copyText.select();
+        document.execCommand("copy");
+        alert("Скопировано!");
+    }
+</script>
+</body>
+</html>
