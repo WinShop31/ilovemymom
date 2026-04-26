@@ -3,78 +3,99 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VLESS Sub Configurator</title>
+    <title>JSON to VLESS Converter</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        body { background-color: #f8f9fa; padding-top: 50px; }
-        .container { max-width: 600px; }
-        textarea { font-family: monospace; font-size: 12px; }
+        body { background-color: #f4f7f6; padding: 30px 10px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        .card { border: none; border-radius: 15px; }
+        textarea { font-family: 'Cascadia Code', 'Courier New', monospace; font-size: 13px !important; border-radius: 10px !important; }
+        .btn-primary { border-radius: 10px; background: #5d5fef; border: none; }
+        .btn-primary:hover { background: #4a4cd8; }
+        #output { background: #e9ecef; word-break: break-all; cursor: pointer; }
     </style>
 </head>
 <body>
-<div class="container">
-    <div class="card shadow-sm">
-        <div class="card-body">
-            <h4 class="card-title mb-4">VLESS Sub Generator 🛠️</h4>
+
+<div class="container" style="max-width: 700px;">
+    <div class="card shadow-lg">
+        <div class="card-body p-4">
+            <h3 class="text-center mb-4">JSON ➔ VLESS 🚀</h3>
             
             <div class="mb-3">
-                <label class="form-label">Название подписки (Title)</label>
-                <input type="text" id="subTitle" class="form-control" placeholder="Например: BY F" value="BY F">
+                <label class="form-label fw-bold">1. Вставь свой JSON конфиг:</label>
+                <textarea id="jsonInput" class="form-control" rows="10" placeholder='{ "outbounds": [...] }'></textarea>
             </div>
 
             <div class="mb-3">
-                <label class="form-label">Вставь ссылки или JSON массив</label>
-                <textarea id="inputData" class="form-control" rows="8" placeholder='["vless://...", "vless://..."]'></textarea>
+                <label class="form-label fw-bold">2. Новое название (необязательно):</label>
+                <input type="text" id="newName" class="form-control" placeholder="Оставь пустым, чтобы взять из remarks">
             </div>
 
-            <button onclick="generate()" class="btn btn-primary w-100 mb-3">Сгенерировать подписку</button>
+            <button onclick="convert()" class="btn btn-primary w-100 py-2 mb-4">Сконвертировать в ссылку</button>
 
-            <div id="resultArea" style="display: none;">
-                <label class="form-label">Готовый Base64 (для вставки в приложение):</label>
-                <textarea id="outputBase64" class="form-control mb-2" rows="5" readonly></textarea>
-                <button onclick="copyText()" class="btn btn-outline-secondary btn-sm">Копировать в буфер</button>
+            <div id="resultBox" style="display: none;">
+                <label class="form-label fw-bold">Результат (нажми, чтобы скопировать):</label>
+                <textarea id="output" class="form-control" rows="4" readonly onclick="copyResult()"></textarea>
+                <small class="text-muted mt-2 d-block text-center">Эту ссылку можно вставить прямо в v2rayNG / Nekobox</small>
             </div>
         </div>
     </div>
 </div>
 
 <script>
-    function generate() {
-        const title = document.getElementById('subTitle').value || 'Subscription';
-        const input = document.getElementById('inputData').value.strip();
-        let links = [];
+function convert() {
+    try {
+        const json = JSON.parse(document.getElementById('jsonInput').value);
+        const customName = document.getElementById('newName').value.trim();
+        
+        // Ищем outbound с протоколом vless
+        const outbound = json.outbounds.find(o => o.protocol === 'vless');
+        if (!outbound) throw new Error("В конфиге не найден outbound с протоколом vless");
 
-        try {
-            // Пытаемся распарсить как JSON
-            const parsed = JSON.parse(input);
-            links = Array.isArray(parsed) ? parsed : [parsed];
-        } catch (e) {
-            // Если не JSON, просто берем по строкам
-            links = input.split('\n').filter(l => l.trim().startsWith('vless://'));
+        const vnext = outbound.settings.vnext[0];
+        const user = vnext.users[0];
+        const stream = outbound.streamSettings;
+        
+        // Собираем основные части
+        const uuid = user.id;
+        const address = vnext.address;
+        const port = vnext.port;
+        
+        // Название (из поля remarks или кастомное)
+        const name = customName || json.remarks || "Converted_Config";
+
+        // Параметры запроса (Query Params)
+        const params = new URLSearchParams();
+        params.set('encryption', user.encryption || 'none');
+        params.set('flow', user.flow || '');
+        params.set('security', stream.security || 'none');
+        params.set('type', stream.network || 'tcp');
+
+        if (stream.security === 'reality') {
+            const rs = stream.realitySettings;
+            params.set('sni', rs.serverName);
+            params.set('fp', rs.fingerprint || 'chrome');
+            params.set('pbk', rs.publicKey);
+            params.set('sid', rs.shortId || '');
         }
 
-        if (links.length === 0) {
-            alert('Не найдено валидных VLESS ссылок!');
-            return;
-        }
-
-        // Формируем финальный список с инфо-строкой
-        const infoNode = `vless://info@0.0.0.0:443?type=none#${title}`;
-        const fullContent = [infoNode, ...links].join('\n');
-
-        // Кодируем в Base64 (с поддержкой Unicode)
-        const encoded = btoa(unescape(encodeURIComponent(fullContent)));
-
-        document.getElementById('outputBase64').value = encoded;
-        document.getElementById('resultArea').style.display = 'block';
+        // Собираем финальную ссылку
+        const vlessLink = `vless://${uuid}@${address}:${port}?${params.toString()}#${encodeURIComponent(name)}`;
+        
+        document.getElementById('output').value = vlessLink;
+        document.getElementById('resultBox').style.display = 'block';
+    } catch (e) {
+        alert("Ошибка парсинга: " + e.message);
     }
+}
 
-    function copyText() {
-        const copyText = document.getElementById("outputBase64");
-        copyText.select();
-        document.execCommand("copy");
-        alert("Скопировано!");
-    }
+function copyResult() {
+    const copyText = document.getElementById("output");
+    copyText.select();
+    document.execCommand("copy");
+    alert("Ссылка скопирована!");
+}
 </script>
+
 </body>
 </html>
