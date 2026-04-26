@@ -3,68 +3,119 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JSON to VLESS Converter</title>
+    <title>VLESS Converter Pro + Flags</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        body { background-color: #f4f7f6; padding: 30px 10px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        .card { border: none; border-radius: 15px; }
-        textarea { font-family: 'Cascadia Code', 'Courier New', monospace; font-size: 13px !important; border-radius: 10px !important; }
-        .btn-primary { border-radius: 10px; background: #5d5fef; border: none; }
-        .btn-primary:hover { background: #4a4cd8; }
-        #output { background: #e9ecef; word-break: break-all; cursor: pointer; }
+        :root { --primary-color: #5d5fef; --bg-color: #f4f7f6; }
+        body { background-color: var(--bg-color); padding: 40px 15px; font-family: 'Segoe UI', system-ui, sans-serif; }
+        .card { border: none; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); }
+        textarea { font-family: 'Cascadia Code', monospace; font-size: 13px !important; border-radius: 12px !important; resize: none; }
+        .btn-primary { border-radius: 12px; background: var(--primary-color); border: none; padding: 12px; font-weight: 600; }
+        #output { background: #f8f9fa; color: #212529; font-weight: 500; }
+        .label-bold { font-weight: 600; color: #495057; margin-bottom: 8px; display: block; }
+        .success-badge { display: none; color: #28a745; font-size: 0.9rem; text-align: center; margin-top: 5px; }
     </style>
 </head>
 <body>
 
-<div class="container" style="max-width: 700px;">
-    <div class="card shadow-lg">
-        <div class="card-body p-4">
-            <h3 class="text-center mb-4">JSON ➔ VLESS 🚀</h3>
+<div class="container" style="max-width: 750px;">
+    <div class="card">
+        <div class="card-body p-4 p-md-5">
+            <h3 class="text-center mb-4">JSON ➔ VLESS Config + Flags 🌍</h3>
             
-            <div class="mb-3">
-                <label class="form-label fw-bold">1. Вставь свой JSON конфиг:</label>
-                <textarea id="jsonInput" class="form-control" rows="10" placeholder='{ "outbounds": [...] }'></textarea>
+            <div class="mb-4">
+                <label class="label-bold">1. Вставь JSON конфиг:</label>
+                <textarea id="jsonInput" class="form-control" rows="10" placeholder="Вставь JSON код сюда..."></textarea>
             </div>
 
-            <div class="mb-3">
-                <label class="form-label fw-bold">2. Новое название (необязательно):</label>
-                <input type="text" id="newName" class="form-control" placeholder="Оставь пустым, чтобы взять из remarks">
+            <div class="mb-4">
+                <label class="label-bold">2. Свое название (опционально):</label>
+                <input type="text" id="newName" class="form-control" placeholder="Название страны (флаг подставится сам)">
             </div>
 
-            <button onclick="convert()" class="btn btn-primary w-100 py-2 mb-4">Сконвертировать в ссылку</button>
+            <button onclick="convert()" class="btn btn-primary w-100 mb-4">Сгенерировать ссылку</button>
 
             <div id="resultBox" style="display: none;">
-                <label class="form-label fw-bold">Результат (нажми, чтобы скопировать):</label>
+                <label class="label-bold">Готовая ссылка:</label>
                 <textarea id="output" class="form-control" rows="4" readonly onclick="copyResult()"></textarea>
-                <small class="text-muted mt-2 d-block text-center">Эту ссылку можно вставить прямо в v2rayNG / Nekobox</small>
+                <div id="copyStatus" class="success-badge">✅ Скопировано!</div>
             </div>
         </div>
     </div>
 </div>
 
 <script>
+const flagMap = {
+    // Европа
+    "германия": "🇩🇪", "germany": "🇩🇪", "deutch": "🇩🇪",
+    "польша": "🇵🇱", "poland": "🇵🇱",
+    "финляндия": "🇫🇮", "finland": "🇫🇮",
+    "чехия": "🇨🇿", "czech": "🇨🇿",
+    "нидерланды": "🇳🇱", "netherlands": "🇳🇱", "holland": "🇳🇱",
+    "франция": "🇫🇷", "france": "🇫🇷",
+    "великобритания": "🇬🇧", "uk": "🇬🇧", "britain": "🇬🇧", "london": "🇬🇧",
+    "италия": "🇮🇹", "italy": "🇮🇹",
+    "испания": "🇪🇸", "spain": "🇪🇸",
+    "швеция": "🇸🇪", "sweden": "🇸🇪",
+    "норвегия": "🇳🇴", "norway": "🇳🇴",
+    "швейцария": "🇨🇭", "switzerland": "🇨🇭",
+    "австрия": "🇦🇹", "austria": "🇦🇹",
+    "украина": "🇺🇦", "ukraine": "🇺🇦",
+    "эстония": "🇪🇪", "estonia": "🇪🇪",
+    "латвия": "🇱🇻", "latvia": "🇱🇻",
+    "литва": "🇱🇹", "lithuania": "🇱🇹",
+    "болгария": "🇧🇬", "bulgaria": "🇧🇬",
+    "румыния": "🇷🇴", "romania": "🇷🇴",
+    "молдова": "🇲🇩", "moldova": "🇲🇩",
+    "бельгия": "🇧🇪", "belgium": "🇧🇪",
+
+    // СНГ и Азия
+    "россия": "🇷🇺", "russia": "🇷🇺",
+    "казахстан": "🇰🇿", "kazakhstan": "🇰🇿",
+    "турция": "🇹🇷", "turkey": "🇹🇷", "tr": "🇹🇷",
+    "узбекистан": "🇺🇿", "uzbekistan": "🇺🇿",
+    "грузия": "🇬🇪", "georgia": "🇬🇪",
+    "армения": "🇦🇲", "armenia": "🇦🇲",
+    "япония": "🇯🇵", "japan": "🇯🇵",
+    "китай": "🇨🇳", "china": "🇨🇳",
+    "южная корея": "🇰🇷", "korea": "🇰🇷",
+    "сингапур": "🇸🇬", "singapore": "🇸🇬",
+    "индия": "🇮🇳", "india": "🇮🇳",
+    "оаэ": "🇦🇪", "uae": "🇦🇪", "dubai": "🇦🇪",
+
+    // Америка и другие
+    "сша": "🇺🇸", "usa": "🇺🇸", "america": "🇺🇸",
+    "канада": "🇨🇦", "canada": "🇨🇦",
+    "бразилия": "🇧🇷", "brazil": "🇧🇷",
+    "аргентина": "🇦🇷", "argentina": "🇦🇷",
+    "австралия": "🇦🇺", "australia": "🇦🇺"
+};
+
+function getFlag(name) {
+    const lowerName = name.toLowerCase();
+    for (const [key, emoji] of Object.entries(flagMap)) {
+        if (lowerName.includes(key)) return emoji + " ";
+    }
+    return "🌐 ";
+}
+
 function convert() {
     try {
-        const json = JSON.parse(document.getElementById('jsonInput').value);
+        const inputVal = document.getElementById('jsonInput').value.trim();
+        const json = JSON.parse(inputVal);
         const customName = document.getElementById('newName').value.trim();
         
-        // Ищем outbound с протоколом vless
         const outbound = json.outbounds.find(o => o.protocol === 'vless');
-        if (!outbound) throw new Error("В конфиге не найден outbound с протоколом vless");
+        if (!outbound) throw new Error("VLESS outbound не найден!");
 
         const vnext = outbound.settings.vnext[0];
         const user = vnext.users[0];
         const stream = outbound.streamSettings;
         
-        // Собираем основные части
-        const uuid = user.id;
-        const address = vnext.address;
-        const port = vnext.port;
-        
-        // Название (из поля remarks или кастомное)
-        const name = customName || json.remarks || "Converted_Config";
+        let rawName = customName || json.remarks || "Server";
+        const flag = getFlag(rawName);
+        const finalName = rawName.includes(flag.trim()) ? rawName : flag + rawName;
 
-        // Параметры запроса (Query Params)
         const params = new URLSearchParams();
         params.set('encryption', user.encryption || 'none');
         params.set('flow', user.flow || '');
@@ -79,13 +130,13 @@ function convert() {
             params.set('sid', rs.shortId || '');
         }
 
-        // Собираем финальную ссылку
-        const vlessLink = `vless://${uuid}@${address}:${port}?${params.toString()}#${encodeURIComponent(name)}`;
+        const vlessLink = `vless://${user.id}@${vnext.address}:${vnext.port}?${params.toString()}#${encodeURIComponent(finalName)}`;
         
         document.getElementById('output').value = vlessLink;
         document.getElementById('resultBox').style.display = 'block';
+        document.getElementById('copyStatus').style.display = 'none';
     } catch (e) {
-        alert("Ошибка парсинга: " + e.message);
+        alert("Ошибка: " + e.message);
     }
 }
 
@@ -93,9 +144,9 @@ function copyResult() {
     const copyText = document.getElementById("output");
     copyText.select();
     document.execCommand("copy");
-    alert("Ссылка скопирована!");
+    document.getElementById('copyStatus').style.display = 'block';
+    setTimeout(() => { document.getElementById('copyStatus').style.display = 'none'; }, 2000);
 }
 </script>
-
 </body>
 </html>
