@@ -879,16 +879,16 @@
     <div id="log-screen">
         <div class="log-container">
             <h1>⚠️ Возможные ошибки</h1>
-            <p class="log-subtitle">FAi — сервис команды FTeam. Из-за большого количества пользователей серверы FAi могут временно[...]
+            <p class="log-subtitle">FAi — сервис команды FTeam. Из-за большого количества пользователей серверы FAi могут временно ограничивать запросы</p>
 
             <div class="log-entry error">
                 <div class="log-icon">🚫</div>
                 <div class="log-title">Сервер FAi перегружен</div>
                 <div class="log-desc">
-                    Серверы FTeam обслуживают тысячи пользователей одновременно. Когда нагрузка максимальная, FAi возвра[...]
+                    Серверы FTeam обслуживают тысячи пользователей одновременно. Когда нагрузка максимальная, FAi возвращает ошибку «Слишком много запросов».
                 </div>
                 <div class="log-solution">
-                    <strong>Как FTeam решает:</strong> FAi автоматически перенаправляет запрос на резервный сервер. Если и он заня[...]
+                    <strong>Как FTeam решает:</strong> FAi автоматически перенаправляет запрос на резервный сервер. Если и он занят — пробуется третий сервер. Когда все серверы загружены — FAi использует запасную модель (только текст, без изображений).
                 </div>
             </div>
 
@@ -896,10 +896,10 @@
                 <div class="log-icon">🔄</div>
                 <div class="log-title">FAi долго отвечает</div>
                 <div class="log-desc">
-                    В часы пик (обычно 18:00–23:00 МСК) серверы FTeam обрабатывают очередь запросов. FAi может отвечать от 10 сек[...]
+                    В часы пик (обычно 18:00–23:00 МСК) серверы FTeam обрабатывают очередь запросов. FAi может отвечать от 10 секунд до 1 минуты — это нормально для бесплатного сервиса.
                 </div>
                 <div class="log-solution">
-                    <strong>Что делает FAi:</strong> Показывает анимацию «FAi печатает», чтобы вы видели процесс. Ввод заблокиров[...]
+                    <strong>Что делает FAi:</strong> Показывает анимацию «FAi печатает», чтобы вы видели процесс. Ввод заблокирован до получения ответа — это предотвращает перегрузку серверов FTeam.
                 </div>
             </div>
 
@@ -907,10 +907,10 @@
                 <div class="log-icon">🖼</div>
                 <div class="log-title">FAi не обрабатывает изображение</div>
                 <div class="log-desc">
-                    Запасная модель FTeam не поддерживает анализ изображений. Если основной сервер FAi (Qwen) недоступен, пр[...]
+                    Запасная модель FTeam не поддерживает анализ изображений. Если основной сервер FAi (Qwen) недоступен, при отправке картинки через резерв вы получите ошибку.
                 </div>
                 <div class="log-solution">
-                    <strong>Как FTeam решает:</strong> При резервном режиме FAi заменяет изображение на текст «[изображение]». Для[...]
+                    <strong>Как FTeam решает:</strong> При резервном режиме FAi заменяет изображение на текст «[изображение]». Для анализа картинок подождите минуту — основной сервер FTeam станет доступен.
                 </div>
             </div>
 
@@ -918,10 +918,10 @@
                 <div class="log-icon">📭</div>
                 <div class="log-title">FAi вернул пустой ответ</div>
                 <div class="log-desc">
-                    Иногда серверы FTeam возвращают ответ без содержимого. Это происходит из-за перегрузки — инфраструк[...]
+                    Иногда серверы FTeam возвращают ответ без содержимого. Это происходит из-за перегрузки — инфраструктура FTeam не всегда успевает обработать запрос корректно.
                 </div>
                 <div class="log-solution">
-                    <strong>Как FTeam решает:</strong> FAi автоматически повторяет запрос через другой сервер. Если проблема сохр[...]
+                    <strong>Как FTeam решает:</strong> FAi автоматически повторяет запрос через другой сервер. Если проблема сохраняется — подождите 1–2 минуты и попробуйте снова.
                 </div>
             </div>
 
@@ -929,10 +929,10 @@
                 <div class="log-icon">🔑</div>
                 <div class="log-title">Проблемы с входом в FAi</div>
                 <div class="log-desc">
-                    Система авторизации FTeam может отказать, если неверный email, слабый пароль (менее 6 символов) или акка[...]
+                    Система авторизации FTeam может отказать, если неверный email, слабый пароль (менее 6 символов) или аккаунт уже существует с другими данными.
                 </div>
                 <div class="log-solution">
-                    <strong>Что делать:</strong> Проверьте правильность email. При регистрации в FAi используйте пароль от 6 символ[...]
+                    <strong>Что делать:</strong> Проверьте правильность email. При регистрации в FAi используйте пароль от 6 символов. Если «email уже используется» — аккаунт FTeam уже создан, просто войдите.
                 </div>
             </div>
 
@@ -960,9 +960,11 @@
             <input type="email" id="auth-email" placeholder="Email" autocomplete="email">
             <input type="password" id="auth-password" placeholder="Пароль" autocomplete="current-password">
             
-            <div class="agreement-checkbox" id="agreement-container" style="display: none;">
-                <input type="checkbox" id="agree-terms" onchange="checkAgreements()">
-                <span id="agreement-text">Я согласен с <a href="https://telegra.ph/Polzovatelskoe-soglashenie-04-01-19" target="_blank">пользовательским соглашением</a> и <a href="https://telegra.ph/Politika-konfidencialnosti-04-01-26" target="_blank">политикой конфиденциальности</a></span>
+            <div class="agreement-section" id="agreement-section">
+                <div class="agreement-checkbox">
+                    <input type="checkbox" id="agree-terms" onchange="checkAgreements()">
+                    <span>Я согласен с <a href="https://telegra.ph/Polzovatelskoe-soglashenie-04-01-19" target="_blank">пользовательским соглашением</a> и <a href="https://telegra.ph/Politika-konfidencialnosti-04-01-26" target="_blank">политикой конфиденциальности</a></span>
+                </div>
             </div>
 
             <button id="auth-btn" class="auth-btn">Войти</button>
@@ -1059,32 +1061,39 @@
             const btn = document.getElementById('auth-btn');
             const switchText = document.getElementById('auth-switch-text');
             const switchLink = document.getElementById('auth-switch-link');
-            const agreementContainer = document.getElementById('agreement-container');
+            const agreementSection = document.getElementById('agreement-section');
             
             if (isLoginMode) {
                 btn.textContent = 'Войти';
                 switchText.textContent = 'Нет аккаунта?';
                 switchLink.textContent = 'Зарегистрироваться';
-                agreementContainer.style.display = 'none';
+                agreementSection.classList.remove('show');
             } else {
                 btn.textContent = 'Зарегистрироваться';
                 switchText.textContent = 'Уже есть аккаунт?';
                 switchLink.textContent = 'Войти';
-                agreementContainer.style.display = 'flex';
+                agreementSection.classList.add('show');
             }
             
             document.getElementById('auth-error').style.display = 'none';
             document.getElementById('auth-email').value = '';
             document.getElementById('auth-password').value = '';
             document.getElementById('agree-terms').checked = false;
+            checkAgreements();
         }
 
         function checkAgreements() {
             const btn = document.getElementById('auth-btn');
-            const isChecked = document.getElementById('agree-terms').checked;
-            btn.disabled = !isChecked;
-            btn.style.opacity = isChecked ? '1' : '0.5';
-            btn.style.cursor = isChecked ? 'pointer' : 'not-allowed';
+            if (!isLoginMode) {
+                const isChecked = document.getElementById('agree-terms').checked;
+                btn.disabled = !isChecked;
+                btn.style.opacity = isChecked ? '1' : '0.5';
+                btn.style.cursor = isChecked ? 'pointer' : 'not-allowed';
+            } else {
+                btn.disabled = false;
+                btn.style.opacity = '1';
+                btn.style.cursor = 'pointer';
+            }
         }
 
         function showError(message) {
