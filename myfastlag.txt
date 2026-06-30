@@ -1,0 +1,20 @@
+{
+  "FFlagGameBasicSettingsFramerateCap5": "False",
+  "FFlagTaskSchedulerLimitTargetFpsTo2402": "False",
+  "DFIntTaskSchedulerTargetFps": "9999",
+  "FFlagDebugDisableMinimumVsync": "True",
+  "DFIntDebugFRMQualityLevelOverride": "1",
+  "DFIntRenderClampRoughnessMax": "-640000000",
+  "FFlagGlobalWindRendering": "False",
+  "FFlagGlobalWindActivated": "False",
+  "FFlagRenderShadowControl": "False",
+  "FIntRenderShadowMapResolution": "1",
+  "FIntRenderShadowBias": "0",
+  "FFlagRenderCheckThreading": "True",
+  "FFlagDebugCheckRenderThreading": "True",
+  "FIntLuaGcParallelMinMultiTasks": "4",
+  "FFlagChatTranslationSettingEnabled3": "False",
+  "FFlagPreComputeAcceleratorArrayForSharingTimeCurve": "True",
+  "FFlagMovePreRender": "True",
+  "DFFlagDebugPerfMode": "True"
+}
