@@ -1,2 +1,10 @@
 iwr "https://github.com/sigoden/aichat/releases/download/v0.24.0/aichat-v0.24.0-x86_64-pc-windows-msvc.zip" -OutFile "$env:TEMP\ai.zip"; Expand-Archive "$env:TEMP\ai.zip" "$env:TEMP\ai" -Force; move "$env:TEMP\ai\aichat.exe" "C:\Windows\System32\" -Force
 move "$env:TEMP\ai\aichat.exe" "$env:USERPROFILE\" -Force
+
+model: gemini:gemini-1.5-flash
+clients:
+  - type: gemini
+    api_base: http://IP_ТВОЕГО_СЕРВЕРА/v1beta
+    api_key: AQ.Ab8RN6Iod2-32P2W9IZTflZ3I5NutFjuOOnbQLQGr_gapXx2YA
+
+if (!(Test-Path "$env:USERPROFILE\.config\aichat")) { New-Item -ItemType Directory -Path "$env:USERPROFILE\.config\aichat" -Force }; notepad "$env:USERPROFILE\.config\aichat\config.yaml"
