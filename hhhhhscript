@@ -8,3 +8,5 @@ clients:
     api_key: AQ.Ab8RN6Iod2-32P2W9IZTflZ3I5NutFjuOOnbQLQGr_gapXx2YA
 
 if (!(Test-Path "$env:USERPROFILE\.config\aichat")) { New-Item -ItemType Directory -Path "$env:USERPROFILE\.config\aichat" -Force }; notepad "$env:USERPROFILE\.config\aichat\config.yaml"
+
+AIzaSyAo_eptErrBrE4gDBsUvbHEgr3GeKcmzaE
