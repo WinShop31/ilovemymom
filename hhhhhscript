@@ -1,1 +1,2 @@
 iwr "https://github.com/sigoden/aichat/releases/download/v0.24.0/aichat-v0.24.0-x86_64-pc-windows-msvc.zip" -OutFile "$env:TEMP\ai.zip"; Expand-Archive "$env:TEMP\ai.zip" "$env:TEMP\ai" -Force; move "$env:TEMP\ai\aichat.exe" "C:\Windows\System32\" -Force
+move "$env:TEMP\ai\aichat.exe" "$env:USERPROFILE\" -Force
